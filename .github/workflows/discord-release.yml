@@ -3,6 +3,7 @@ name: Notificar Release no Discord
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   notify:
@@ -11,10 +12,10 @@ jobs:
       - name: Enviar Embed Personalizado para o Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          RELEASE_TITLE: ${{ github.event.release.name || github.event.release.tag_name }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          RELEASE_URL: ${{ github.event.release.html_url }}
-          RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_TITLE: ${{ github.event.release.name || github.event.release.tag_name || 'Teste Manual' }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || 'v0.0.0-test' }}
+          RELEASE_URL: ${{ github.event.release.html_url || github.server_url && format('{0}/{1}', github.server_url, github.repository) }}
+          RELEASE_BODY: ${{ github.event.release.body || 'Este é um disparo manual de teste para confirmar que o Webhook do Discord está a funcionar!' }}
           REPO_NAME: ${{ github.repository }}
         run: |
           # Monta o payload JSON com embed personalizado
