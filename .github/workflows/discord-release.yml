@@ -1,0 +1,61 @@
+name: Notificar Release no Discord
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar Embed Personalizado para o Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          RELEASE_TITLE: ${{ github.event.release.name || github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          # Monta o payload JSON com embed personalizado
+          PAYLOAD=$(jq -n \
+            --arg content "🚀 **Nova atualização disponível!** @everyone" \
+            --arg username "GitHub Release Bot" \
+            --arg avatar_url "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" \
+            --arg title "$RELEASE_TITLE ($RELEASE_TAG)" \
+            --arg url "$RELEASE_URL" \
+            --arg repo "$REPO_NAME" \
+            --arg body "$RELEASE_BODY" \
+            '{
+              content: $content,
+              username: $username,
+              avatar_url: $avatar_url,
+              embeds: [
+                {
+                  title: $title,
+                  url: $url,
+                  description: (if ($body | length > 1500) then ($body[0:1500] + "...\n\n*(cortado por limite de tamanho)*") else $body end),
+                  color: 3066993,
+                  fields: [
+                    {
+                      name: "📦 Repositório",
+                      value: $repo,
+                      inline: true
+                    },
+                    {
+                      name: "🏷️ Tag",
+                      value: $RELEASE_TAG,
+                      inline: true
+                    }
+                  ],
+                  footer: {
+                    text: "Lançado no GitHub",
+                    icon_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                  },
+                  timestamp: (now | todate)
+                }
+              ]
+            }')
+
+          # Envia a mensagem para o Discord
+          curl -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$DISCORD_WEBHOOK"
