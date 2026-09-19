@@ -24,6 +24,7 @@ jobs:
             --arg username "GitHub Release Bot" \
             --arg avatar_url "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" \
             --arg title "$RELEASE_TITLE ($RELEASE_TAG)" \
+            --arg tag "$RELEASE_TAG" \
             --arg url "$RELEASE_URL" \
             --arg repo "$REPO_NAME" \
             --arg body "$RELEASE_BODY" \
@@ -45,7 +46,7 @@ jobs:
                     },
                     {
                       name: "🏷️ Tag",
-                      value: $RELEASE_TAG,
+                      value: $tag,
                       inline: true
                     }
                   ],
