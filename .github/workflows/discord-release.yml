@@ -1,4 +1,4 @@
-name: Notificar Release no Discord
+name: Notify Release on Discord
 
 on:
   release:
@@ -9,18 +9,18 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Enviar Embed Personalizado para o Discord
+      - name: Send Custom Embed to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          RELEASE_TITLE: ${{ github.event.release.name || github.event.release.tag_name || 'Teste Manual' }}
+          RELEASE_TITLE: ${{ github.event.release.name || github.event.release.tag_name || 'Manual Test' }}
           RELEASE_TAG: ${{ github.event.release.tag_name || 'v0.0.0-test' }}
           RELEASE_URL: ${{ github.event.release.html_url || github.server_url && format('{0}/{1}', github.server_url, github.repository) }}
-          RELEASE_BODY: ${{ github.event.release.body || 'Este é um disparo manual de teste para confirmar que o Webhook do Discord está a funcionar!' }}
+          RELEASE_BODY: ${{ github.event.release.body || 'This is a manual test dispatch to verify that the Discord Webhook is working!' }}
           REPO_NAME: ${{ github.repository }}
         run: |
-          # Monta o payload JSON com embed personalizado
+          # Build JSON payload with custom embed
           PAYLOAD=$(jq -n \
-            --arg content "🚀 **Nova atualização disponível!** <@&1550939281344823458>" \
+            --arg content "🚀 **New update available!** <@&1550939281344823458>" \
             --arg username "GitHub Release Bot" \
             --arg avatar_url "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" \
             --arg title "$RELEASE_TITLE ($RELEASE_TAG)" \
@@ -36,11 +36,11 @@ jobs:
                 {
                   title: $title,
                   url: $url,
-                  description: (if ($body | length > 1500) then ($body[0:1500] + "...\n\n*(cortado por limite de tamanho)*") else $body end),
+                  description: (if ($body | length > 1500) then ($body[0:1500] + "...\n\n*(truncated due to length limit)*") else $body end),
                   color: 3066993,
                   fields: [
                     {
-                      name: "📦 Repositório",
+                      name: "📦 Repository",
                       value: $repo,
                       inline: true
                     },
@@ -51,7 +51,7 @@ jobs:
                     }
                   ],
                   footer: {
-                    text: "Lançado no GitHub",
+                    text: "Released on GitHub",
                     icon_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
                   },
                   timestamp: (now | todate)
