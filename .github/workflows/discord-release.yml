@@ -20,7 +20,7 @@ jobs:
         run: |
           # Monta o payload JSON com embed personalizado
           PAYLOAD=$(jq -n \
-            --arg content "🚀 **Nova atualização disponível!** @everyone" \
+            --arg content "🚀 **Nova atualização disponível!** <@&1550939281344823458>" \
             --arg username "GitHub Release Bot" \
             --arg avatar_url "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" \
             --arg title "$RELEASE_TITLE ($RELEASE_TAG)" \
