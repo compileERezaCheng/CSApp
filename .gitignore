@@ -1,0 +1,36 @@
+# ===============================================
+# FICHEIROS PRIVADOS E DADOS LOCAIS DO STREAMER
+# ===============================================
+# Contém tokens StreamElements, webhooks e passwords locais
+data.json
+logs.txt
+
+# Contexto de desenvolvimento privado do autor
+CONTEXTO_PROJETO.md
+
+# ===============================================
+# DEPENDÊNCIAS & BUILDS
+# ===============================================
+node_modules/
+package-lock.json
+
+# Instalador gerado (pesado, deve ser distribuído via Releases/Gumroad)
+Instalador/
+
+# Ficheiros e uploads locais do utilizador
+public/uploads/*
+!public/uploads/.gitkeep
+
+# ===============================================
+# SISTEMA E RASCUNHOS
+# ===============================================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+diff.txt
+temp.js
+temp/
+fix*.js
+.vscode/
+.idea/

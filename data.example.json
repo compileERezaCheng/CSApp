@@ -1,0 +1,114 @@
+{
+  "timerSeconds": 3600,
+  "settings": {
+    "seToken": "",
+    "tunnelName": "",
+    "subTime": 300,
+    "subTimeT2": 600,
+    "subTimeT3": 900,
+    "bitTime": 60,
+    "tipTime": 60,
+    "kofiTime": 60,
+    "followTime": 10,
+    "raidTime": 1,
+    "baseRaidTime": 60,
+    "goalSubValue": 1,
+    "modPassword": "123",
+    "textColor": "#ffffff",
+    "bgColor": "#000000",
+    "borderColor": "#000000",
+    "glowColor": "#8b5cf6",
+    "panelAlertColor": "#10b981",
+    "fontFamily": "sans-serif",
+    "fontSize": 70,
+    "bgImageUrl": "",
+    "animationName": "anim-pulse",
+    "customCss": "",
+    "googleSheetUrl": "",
+    "enableFlash": true,
+    "goalTrackingType": "money",
+    "goalPrefix": "€",
+    "designs": {
+      "timer": {
+        "timer": {
+          "x": 700,
+          "y": 50,
+          "width": 350,
+          "height": 140,
+          "fontSize": 70,
+          "color": "#ffffff",
+          "bg": "rgba(15,23,42,0.8)",
+          "border": "#8b5cf6",
+          "glow": "#8b5cf6"
+        },
+        "images": [],
+        "texts": [],
+        "fonts": []
+      },
+      "goals": {
+        "images": [],
+        "texts": [],
+        "fonts": [],
+        "goalsQueue": {
+          "x": 100,
+          "y": 100,
+          "width": 1000,
+          "height": 400,
+          "fontSize": 24,
+          "animSpeed": 0.5,
+          "slideSpeed": 0.5,
+          "completedDelay": 2,
+          "itemGap": 10
+        }
+      },
+      "podium": {
+        "images": [],
+        "texts": [],
+        "fonts": [],
+        "podium": {
+          "x": 100,
+          "y": 100,
+          "width": 550,
+          "height": 200,
+          "fontSize": 24,
+          "color": "#ffffff",
+          "orientation": "vertical"
+        }
+      },
+      "roulette": {
+        "images": [],
+        "texts": [],
+        "fonts": [],
+        "roulette": {
+          "x": 100,
+          "y": 100,
+          "width": 500,
+          "height": 500,
+          "fontSize": 50
+        }
+      }
+    },
+    "rouletteOptions": [
+      { "id": 1, "label": "Cantar uma Música", "weight": 1, "color": "#10b981", "active": true },
+      { "id": 2, "label": "VIP por 1 Dia", "weight": 2, "color": "#3b82f6", "active": true },
+      { "id": 3, "label": "10 Flexões", "weight": 1, "color": "#ef4444", "active": true }
+    ],
+    "rouletteProfiles": {
+      "Default": [
+        { "id": 1, "label": "Cantar uma Música", "weight": 1, "color": "#10b981", "active": true },
+        { "id": 2, "label": "VIP por 1 Dia", "weight": 2, "color": "#3b82f6", "active": true },
+        { "id": 3, "label": "10 Flexões", "weight": 1, "color": "#ef4444", "active": true }
+      ]
+    },
+    "currentRouletteProfile": "Default"
+  },
+  "subathonData": {
+    "currentSubs": 0,
+    "visibleCount": 3,
+    "goals": [
+      { "id": 1, "title": "Meta 1", "target": 10, "completed": false },
+      { "id": 2, "title": "Meta 2", "target": 25, "completed": false }
+    ],
+    "userStats": {}
+  }
+}

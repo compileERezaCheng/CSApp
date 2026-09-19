@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Roleta</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</head>
+<body class="admin-body">
+    <div class="dashboard-wrapper">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <h2 style="margin-top:0; margin-bottom: 20px; color: white; text-align:center;">Dashboard</h2>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Setup & Segurança
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/timer'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Timer
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/goals'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Objetivos
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/podium'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Pódio
+            </button>
+
+            <button class="sidebar-btn active" onclick="window.location.href='/roulette'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                Roleta
+            </button>
+
+            <!-- Spacing to push bottom items down -->
+            <div style="flex-grow: 1; min-height: 50px;"></div>
+            
+            <a href="https://discord.gg/GaQUq5PFk" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; background:#5865F2; color:white; text-decoration:none; border-radius:8px; font-weight:bold; font-size:14px; margin-top:10px; transition: background 0.2s;" onmouseover="this.style.background='#4752C4'" onmouseout="this.style.background='#5865F2'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+                Feedback
+            </a>
+            
+            <div style="display:flex; align-items:center; gap:8px; margin-top:15px; cursor:pointer;" onclick="document.getElementById('enableFlash').click()">
+                <span style="font-size:12px; font-weight:bold; color:#cbd5e1;">Web Alert</span>
+                <label class="switch" style="margin:0; pointer-events:none;">
+                    <input type="checkbox" id="enableFlash" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="content-area">
+            
+            <div id="view-roulette" class="view-section active">
+                
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <h2 style="margin:0;">Configuração da Roleta</h2>
+                    <button id="designTabBtn" class="btn primary" style="background: rgba(139,92,246,0.5); padding: 8px 15px; display:flex; align-items:center; gap:5px; flex:none;" onclick="window.open('/design/roulette', '_blank')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+                        Edit Overlay
+                    </button>
+                </div>
+                
+                <div class="glass-panel" style="margin-bottom: 20px;">
+                    <label style="color:#cbd5e1; font-size:12px; font-weight:bold;">URL para colocares no TEU OBS (Overlay da Roleta):</label>
+                                        <div class="input-group">
+                        <input type="text" value="http://localhost:3000/overlay/roulette" readonly class="link-input" style="padding: 8px; font-size: 14px;" id="localOverlayLinkRoulette" />
+                        <button class="btn-icon" title="Copiar" onclick="copyValue('localOverlayLinkRoulette')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button class="btn secondary" onclick="spinWheel()" style="background:#10b981; color:white; border:none; padding: 10px 20px; font-size: 14px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Girar Roleta (Overlay)</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <label style="color:#cbd5e1; font-size:12px; font-weight:bold;">Perfil da Roleta:</label>
+                            <select id="profileSelect" class="input" style="width:250px; cursor:pointer;" onchange="changeProfile(this.value)">
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:flex-end;">
+                            <button class="btn" onclick="createProfile()" style="background:#3b82f6; color:white; padding:10px; font-size:12px; flex:none; border-radius:5px; border:none;">+ Novo Perfil</button>
+                            <button class="btn danger" onclick="deleteProfile()" style="padding:10px; font-size:12px; flex:none; border-radius:5px; border:none;">Apagar Perfil</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div>
+                            <h3 style="margin:0; color:#c4b5fd;">Opções da Roleta</h3>
+                            <p style="font-size:12px; color:#cbd5e1; margin:0;">Define os prémios e o "peso" (probabilidade) de cada um sair.</p>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn" onclick="activateAllOpts()" style="padding:5px 10px; font-size:12px; background:#f59e0b; color:white; border:none; border-radius:3px; flex:none;" title="Ativar Todas as Opções"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Ativar Tudo</button>
+                            <button class="btn" onclick="addRouletteOption()" style="padding:5px 10px; font-size:12px; background:#10b981; color:white; border:none; border-radius:3px; flex:none;">+ Adicionar Opção</button>
+                        </div>
+                    </div>
+                    
+                    <div id="rouletteOptionsList" style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Options will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- GLOBAL SAVE BUTTON -->
+            <button id="btnSave" class="btn primary mt" style="width:fit-content; margin-left:auto; display:flex; justify-content:center; align-items:center; gap:5px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Opções
+            </button>
+            
+        </main>
+    </div>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="/admin.js"></script>
+        <script>
+        let rouletteProfiles = { "Default": [] };
+        let currentRouletteProfile = "Default";
+
+        socket.on('init', (data) => {
+            let s = data.settings || {};
+            
+            // Migration from old rouletteOptions
+            if (s.rouletteOptions && !s.rouletteProfiles) {
+                rouletteProfiles = { "Default": JSON.parse(JSON.stringify(s.rouletteOptions)) };
+                currentRouletteProfile = "Default";
+            } else if (s.rouletteProfiles) {
+                rouletteProfiles = JSON.parse(JSON.stringify(s.rouletteProfiles));
+                currentRouletteProfile = s.currentRouletteProfile || Object.keys(rouletteProfiles)[0] || "Default";
+            }
+            
+            if (!rouletteProfiles[currentRouletteProfile] || rouletteProfiles[currentRouletteProfile].length === 0) {
+                rouletteProfiles[currentRouletteProfile] = [
+                    { id: Date.now(), label: "10 Flexões", weight: 1, color: "#ef4444" },
+                    { id: Date.now()+1, label: "VIP por 1 Dia", weight: 2, color: "#3b82f6" },
+                    { id: Date.now()+2, label: "Cantar uma Música", weight: 1, color: "#10b981" },
+                    { id: Date.now()+3, label: "Nada (Azar!)", weight: 3, color: "#64748b" }
+                ];
+            }
+            renderProfileSelect();
+            renderOptions();
+        });
+
+        socket.on('settingsUpdated', (s) => {
+            if (s.rouletteProfiles) {
+                rouletteProfiles = JSON.parse(JSON.stringify(s.rouletteProfiles));
+                currentRouletteProfile = s.currentRouletteProfile || Object.keys(rouletteProfiles)[0] || "Default";
+                renderProfileSelect();
+                renderOptions();
+            }
+        });
+
+        socket.on('rouletteWinner', (data) => {
+            const { winner, winnerIndex } = data;
+            const confirmDesativar = confirm("🎉 O VENCEDOR FOI: " + winner.label + " 🎉\n\nQueres DESATIVAR esta opção para que não saia na próxima vez?");
+            if (confirmDesativar) {
+                updateOpt(winner.id, 'active', false);
+                saveRoulette();
+                renderOptions();
+            }
+        });
+
+        function renderProfileSelect() {
+            const select = document.getElementById('profileSelect');
+            if(!select) return;
+            select.innerHTML = '';
+            for(const profileName of Object.keys(rouletteProfiles)) {
+                const opt = document.createElement('option');
+                opt.value = profileName;
+                opt.innerText = profileName;
+                if(profileName === currentRouletteProfile) opt.selected = true;
+                select.appendChild(opt);
+            }
+        }
+
+        window.changeProfile = function(name) {
+            currentRouletteProfile = name;
+            renderOptions();
+            saveRoulette();
+        };
+
+        window.createProfile = function() {
+            const name = prompt("Nome do novo perfil de Roleta:");
+            if(!name || name.trim() === "") return;
+            if(rouletteProfiles[name]) {
+                alert("Já existe um perfil com esse nome!");
+                return;
+            }
+            rouletteProfiles[name] = [
+                { id: Date.now(), label: "Nova Opção", weight: 1, color: "#3b82f6" }
+            ];
+            currentRouletteProfile = name;
+            renderProfileSelect();
+            renderOptions();
+            saveRoulette();
+        };
+
+        window.deleteProfile = function() {
+            const keys = Object.keys(rouletteProfiles);
+            if(keys.length <= 1) {
+                alert("Não podes apagar o único perfil que tens!");
+                return;
+            }
+            const confirmDel = confirm("Tens a certeza que queres apagar o perfil '" + currentRouletteProfile + "'?");
+            if(confirmDel) {
+                delete rouletteProfiles[currentRouletteProfile];
+                currentRouletteProfile = Object.keys(rouletteProfiles)[0];
+                renderProfileSelect();
+                renderOptions();
+                saveRoulette();
+            }
+        };
+
+                let draggedOptId = null;
+
+        window.reorderOpt = function(draggedId, targetId) {
+            const arr = rouletteProfiles[currentRouletteProfile];
+            const draggedIdx = arr.findIndex(o => o.id === draggedId);
+            const targetIdx = arr.findIndex(o => o.id === targetId);
+            if (draggedIdx === -1 || targetIdx === -1) return;
+            
+            const [draggedItem] = arr.splice(draggedIdx, 1);
+            arr.splice(targetIdx, 0, draggedItem);
+            renderOptions();
+            saveRoulette();
+        };
+
+        function renderOptions() {
+            const list = document.getElementById('rouletteOptionsList');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            const currentData = rouletteProfiles[currentRouletteProfile] || [];
+            
+            currentData.forEach((opt, idx) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '10px';
+                item.style.background = 'rgba(0,0,0,0.3)';
+                item.style.padding = '10px';
+                item.style.borderRadius = '5px';
+                item.style.transition = 'opacity 0.2s';
+                if (opt.active === false) item.style.opacity = '0.4';
+                
+                item.draggable = true;
+                item.ondragstart = (e) => {
+                    draggedOptId = opt.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                    item.style.opacity = '0.2';
+                };
+                item.ondragend = (e) => {
+                    item.style.opacity = opt.active === false ? '0.4' : '1';
+                    draggedOptId = null;
+                };
+                item.ondragover = (e) => {
+                    e.preventDefault();
+                    item.style.borderTop = '2px solid #3b82f6';
+                };
+                item.ondragleave = (e) => {
+                    item.style.borderTop = 'none';
+                };
+                item.ondrop = (e) => {
+                    e.preventDefault();
+                    item.style.borderTop = 'none';
+                    if (draggedOptId && draggedOptId !== opt.id) {
+                        reorderOpt(draggedOptId, opt.id);
+                    }
+                };
+                
+                item.innerHTML = `
+                    <div style="cursor:grab; color:#64748b;">&#9776;</div>
+                    <div style="display:flex; align-items:center; justify-content:center;">
+                        <input type="checkbox" style="width:20px; height:20px; cursor:pointer;" ${opt.active !== false ? 'checked' : ''} onchange="updateOpt(${opt.id}, 'active', this.checked); renderOptions(); saveRoulette();">
+                    </div>
+                    <div style="flex:1;">
+                        <input type="text" class="input" value="${opt.label.replace(/"/g, '&quot;')}" oninput="updateOpt(${opt.id}, 'label', this.value)" placeholder="Nome do Prémio">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; width:70px;">
+                        <span style="font-size:10px; color:#cbd5e1;">Peso (1-10)</span>
+                        <input type="number" class="input" value="${opt.weight}" min="1" max="100" oninput="updateOpt(${opt.id}, 'weight', parseInt(this.value)||1)">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; width:60px;">
+                        <span style="font-size:10px; color:#cbd5e1;">Cor</span>
+                        <input type="color" style="height:38px; width:100%; border:none; background:transparent; cursor:pointer;" value="${opt.color}" oninput="updateOpt(${opt.id}, 'color', this.value)">
+                    </div>
+                    <button class="btn-icon" style="color:#ef4444;" onclick="removeOpt(${opt.id})" title="Remover"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.updateOpt = function(id, field, val) {
+            const currentData = rouletteProfiles[currentRouletteProfile];
+            const opt = currentData.find(o => o.id === id);
+            if (opt) opt[field] = val;
+        };
+
+        window.activateAllOpts = function() {
+            const currentData = rouletteProfiles[currentRouletteProfile] || [];
+            currentData.forEach(o => o.active = true);
+            renderOptions();
+            saveRoulette();
+        };
+
+        window.addRouletteOption = function() {
+            const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+            rouletteProfiles[currentRouletteProfile].push({
+                id: Date.now(),
+                label: "Nova Opção",
+                weight: 1,
+                active: true,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+            renderOptions();
+        };
+
+        window.removeOpt = function(id) {
+            rouletteProfiles[currentRouletteProfile] = rouletteProfiles[currentRouletteProfile].filter(o => o.id !== id);
+            renderOptions();
+        };
+
+        window.spinWheel = function() {
+            const currentData = rouletteProfiles[currentRouletteProfile] || [];
+            if(currentData.length === 0) {
+                alert("Adiciona pelo menos 1 opção à roleta!");
+                return;
+            }
+            const activeOpts = currentData.filter(o => o.active !== false);
+            if(activeOpts.length === 0) {
+                alert("Ativa pelo menos 1 opção na roleta!");
+                return;
+            }
+            saveRoulette();
+            socket.emit('spinRoulette');
+        };
+
+        function saveRoulette() {
+            const activeOptionsOnly = (rouletteProfiles[currentRouletteProfile] || []).filter(o => o.active !== false);
+            socket.emit('updateSettings', { user: 'Streamer', settings: { rouletteProfiles, currentRouletteProfile, rouletteOptions: activeOptionsOnly } });
+        }
+
+        const originalSave = document.getElementById('btnSave').onclick;
+        document.getElementById('btnSave').onclick = () => {
+            saveRoulette();
+            alert('Roleta guardada com sucesso!');
+        };
+    </script>
+</body>
+</html>
+
+
+
+

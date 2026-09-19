@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css?v=3">
+</head>
+<body class="admin-body">
+    <div class="dashboard-wrapper">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <h2 style="margin-top:0; margin-bottom: 20px; color: white; text-align:center;">Dashboard</h2>
+            
+            <button class="sidebar-btn active" onclick="window.location.href='/'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Setup & Segurança
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/timer'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Timer
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/goals'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Objetivos
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/podium'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Pódio
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/roulette'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                Roleta
+            </button>
+
+            <!-- Spacing to push bottom items down -->
+            <div style="flex-grow: 1; min-height: 50px;"></div>
+            
+            <a href="https://discord.gg/GaQUq5PFk" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; background:#5865F2; color:white; text-decoration:none; border-radius:8px; font-weight:bold; font-size:14px; margin-top:10px; transition: background 0.2s;" onmouseover="this.style.background='#4752C4'" onmouseout="this.style.background='#5865F2'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+                Feedback
+            </a>
+
+            <div style="display:flex; align-items:center; gap:8px; margin-top:15px; cursor:pointer;" onclick="document.getElementById('enableFlash').click()">
+                <span style="font-size:12px; font-weight:bold; color:#cbd5e1;">Web Alert</span>
+                <label class="switch" style="margin:0; pointer-events:none;">
+                    <input type="checkbox" id="enableFlash" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="content-area">
+            
+            <!-- =============================== -->
+            <!-- VIEW: HOME / SETUP & SECURITY -->
+            <!-- =============================== -->
+            <div id="view-home" class="view-section active">
+                <div class="glass-panel" id="linksPanel">
+                    <h3 style="display:flex; align-items:center; gap:5px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Links Públicos</h3>
+                    
+                    <label>Link para Webhook do Ko-fi:</label>
+                    <div class="input-group">
+                        <input type="password" id="webhookUrlDisplay" readonly class="link-input" />
+                        <button class="btn-icon" title="Mostrar/Esconder" onclick="toggleVisibility('webhookUrlDisplay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        <button class="btn-icon" title="Copiar" onclick="copyValue('webhookUrlDisplay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    </div>
+                    
+                    <label class="mt-half">Link do Painel para os teus MODS (Fechado c/ Password):</label>
+                    <div class="input-group">
+                        <input type="password" id="adminUrlDisplay" readonly class="link-input" style="border-color:#10b981;" />
+                        <button class="btn-icon" title="Mostrar/Esconder" onclick="toggleVisibility('adminUrlDisplay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        <button class="btn-icon" title="Copiar" onclick="copyValue('adminUrlDisplay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    </div>
+                    <span style="font-size:11px; color:#94a3b8; display:block; margin-top:5px;">*A password base é "123". Podes mudar abaixo!</span>
+                </div>
+
+                <div class="glass-panel mt" id="sensitiveDataGroup" style="border-color: rgba(239, 68, 68, 0.4);">
+                    <h3 style="display:flex; align-items:center; gap:5px; color:#ef4444;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Segurança & Tokens</h3>
+                    
+                    <label style="color:#fca5a5;">StreamElements JWT Token:</label>
+                    <div class="input-group">
+                        <input type="password" id="seToken" placeholder="Token JWT..." style="border-color:rgba(239, 68, 68, 0.3);" />
+                        <button class="btn-icon" title="Mostrar/Esconder" onclick="toggleVisibility('seToken')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
+                    <span id="seStatus" style="display:block; margin-bottom:15px; font-size:12px;">Desconectado</span>
+                    
+                    <label style="color:#fca5a5;">Nome do Link Público (só letras minúsculas e traços):</label>
+                    <div class="input-group">
+                        <input type="password" id="tunnelName" placeholder="Ex: o-meu-nome" style="border-color:rgba(239, 68, 68, 0.3);" />
+                        <button class="btn-icon" title="Mostrar/Esconder" onclick="toggleVisibility('tunnelName')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
+                    
+                    <div id="passwordGroup" style="margin-top: 15px;">
+                        <label style="color:#10b981; font-weight:bold;">Password do Painel (Mods):</label>
+                        <div class="input-group">
+                            <input type="password" id="modPassword" style="border-color:#10b981;" placeholder="*** (Acesso Mods)" />
+                            <button class="btn-icon" title="Mostrar/Esconder" onclick="toggleVisibility('modPassword')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+                    
+                    <div id="sheetsGroup" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                        <label style="color:#3b82f6; font-weight:bold;">Google Sheets Webhook URL:</label>
+                        <p style="font-size:12px; color:#9ca3af; margin-bottom:5px;">Para registo automático de Subs/Bits/Donates. Cola o link do teu Google Apps Script abaixo:</p>
+                        <div class="input-group">
+                            <input type="password" id="googleSheetUrl" style="border-color:#3b82f6;" placeholder="https://script.google.com/macros/s/.../exec" />
+                            <button class="btn-icon" title="Mostrar/Esconder" onclick="toggleVisibility('googleSheetUrl')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Save Button directly after view-home ends -->
+
+            <!-- GLOBAL SAVE BUTTON -->
+            <button id="btnSave" class="btn primary mt" style="width:100%; display:flex; justify-content:center; align-items:center; gap:5px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Todas as Definições
+            </button>
+            
+        </main>
+    </div>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="/admin.js"></script>
+</body>
+</html>
+

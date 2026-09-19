@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css?v=3">
+</head>
+<body class="admin-body">
+    <div class="dashboard-wrapper">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <h2 style="margin-top:0; margin-bottom: 20px; color: white; text-align:center;">Dashboard</h2>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Setup & Segurança
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/timer'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Timer
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/goals'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Objetivos
+            </button>
+            
+            <button class="sidebar-btn active" onclick="window.location.href='/podium'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Pódio
+            </button>
+            
+            <button class="sidebar-btn" onclick="window.location.href='/roulette'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                Roleta
+            </button>
+
+            <!-- Spacing to push bottom items down -->
+            <div style="flex-grow: 1; min-height: 50px;"></div>
+            
+            <a href="https://discord.gg/GaQUq5PFk" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; background:#5865F2; color:white; text-decoration:none; border-radius:8px; font-weight:bold; font-size:14px; margin-top:10px; transition: background 0.2s;" onmouseover="this.style.background='#4752C4'" onmouseout="this.style.background='#5865F2'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+                Feedback
+            </a>
+            
+            <div style="display:flex; align-items:center; gap:8px; margin-top:15px; cursor:pointer;" onclick="document.getElementById('enableFlash').click()">
+                <span style="font-size:12px; font-weight:bold; color:#cbd5e1;">Web Alert</span>
+                <label class="switch" style="margin:0; pointer-events:none;">
+                    <input type="checkbox" id="enableFlash" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="content-area">
+            
+            <!-- =============================== -->
+            <!-- VIEW: PODIUM APP -->
+            <!-- =============================== -->
+            <div id="view-podium" class="view-section active">
+                
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <h2 style="margin:0;">Configuração do Pódio</h2>
+                    <button id="designTabBtn" class="btn primary" style="background: rgba(139,92,246,0.5); padding: 8px 15px; display:flex; align-items:center; gap:5px; flex:none;" onclick="window.open('/design/podium', '_blank')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+                        Edit Overlay
+                    </button>
+                </div>
+                
+                <div class="glass-panel" style="margin-bottom: 20px;">
+                    <label style="color:#cbd5e1; font-size:12px; font-weight:bold;">URL para colocares no TEU OBS (Overlay do Pódio):</label>
+                    <div class="input-group">
+                        <input type="text" value="http://localhost:3000/overlay/podium" readonly class="link-input" style="padding: 8px; font-size: 14px;" id="localOverlayLinkPodium" />
+                        <button class="btn-icon" title="Copiar" onclick="copyValue('localOverlayLinkPodium')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    </div>
+                </div>
+
+                <div class="glass-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                        <h3 style="margin:0; color:#c4b5fd;">Tabela de Apoiantes (Subs)</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn primary" style="background-color: #2563eb; flex: none; padding: 5px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px;" onclick="syncSheets()" title="Puxar dados do Google Sheets">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.44l5.46-5.46"/></svg>
+                                Sync Sheets
+                            </button>
+                            <button class="btn primary" style="background-color: #10b981; flex: none; padding: 5px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px;" onclick="addPodiumUser()" title="Adicionar Pessoa Manualmente">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Adicionar Pessoa
+                            </button>
+                            <button class="btn danger" style="flex: none; padding: 5px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px;" onclick="resetPodium()" title="Apagar todos os dados do Pódio">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                Resetar Pódio
+                            </button>
+                        </div>
+                    </div>
+                    <p style="font-size:12px; color:#cbd5e1; margin-bottom:20px;">Aqui podes visualizar e editar manualmente os subs de cada pessoa. O sistema atualiza o Pódio automaticamente, mas podes corrigir valores se necessário.</p>
+                    
+                    <div id="podiumUserList" style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Users will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- GLOBAL SAVE BUTTON -->
+            <button id="btnSave" class="btn primary mt" style="width:fit-content; margin-left:auto; display:flex; justify-content:center; align-items:center; gap:5px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Todas as Definições
+            </button>
+            
+        </main>
+    </div>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="/admin.js"></script>
+    <script>
+        // Specific script for podium config
+        let podiumUsers = {};
+        let currentSubathonData = null;
+
+        socket.on('init', (data) => {
+            if (data.subathonData) {
+                currentSubathonData = data.subathonData;
+                if (data.subathonData.userStats) {
+                    podiumUsers = JSON.parse(JSON.stringify(data.subathonData.userStats));
+                    renderPodiumList();
+                }
+            }
+        });
+
+        socket.on('subathonUpdated', (data) => {
+            if (data) {
+                currentSubathonData = data;
+                if (data.userStats) {
+                    podiumUsers = JSON.parse(JSON.stringify(data.userStats));
+                    renderPodiumList();
+                }
+            }
+        });
+
+        function renderPodiumList() {
+            const list = document.getElementById('podiumUserList');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            const users = Object.entries(podiumUsers)
+                .map(([name, stats]) => ({ name, subs: stats.subs || 0, bits: stats.bits || 0, tips: stats.tips || 0 }))
+                .filter(u => u.subs > 0 || u.bits > 0 || u.tips > 0)
+                .sort((a, b) => b.subs - a.subs); // default sort by subs
+                
+            if (users.length === 0) {
+                list.innerHTML = '<div style="color:#94a3b8; font-size:14px;">Ainda não há dados de doações.</div>';
+                return;
+            }
+
+            users.forEach((u, idx) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '10px';
+                item.style.background = 'rgba(0,0,0,0.3)';
+                item.style.padding = '10px';
+                item.style.borderRadius = '5px';
+                
+                item.innerHTML = `
+                    <div style="flex:1;">
+                        <input type="text" class="input" value="${u.name}" readonly style="background:rgba(255,255,255,0.05); color:#94a3b8;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; width:80px;">
+                        <span style="font-size:10px; color:#fbbf24;">Subs</span>
+                        <input type="number" class="input" value="${u.subs}" oninput="updatePodiumUser('${u.name}', 'subs', parseInt(this.value)||0)">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; width:80px;">
+                        <span style="font-size:10px; color:#94a3b8;">Bits</span>
+                        <input type="number" class="input" value="${u.bits}" oninput="updatePodiumUser('${u.name}', 'bits', parseInt(this.value)||0)">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; width:80px;">
+                        <span style="font-size:10px; color:#b45309;">Donos $</span>
+                        <input type="number" step="any" class="input" value="${u.tips}" oninput="updatePodiumUser('${u.name}', 'tips', parseFloat(this.value)||0)">
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.updatePodiumUser = function(name, field, val) {
+            const existingKey = Object.keys(podiumUsers).find(k => k.toLowerCase() === name.toLowerCase()) || name;
+            if (podiumUsers[existingKey]) {
+                podiumUsers[existingKey][field] = val;
+            }
+        };
+
+        window.addPodiumUser = function() {
+            const name = prompt('Introduz o nome do apoiante (ex: "Nome_da_Pessoa"):');
+            if (name && name.trim() !== '') {
+                const safeName = name.trim();
+                const existingKey = Object.keys(podiumUsers).find(k => k.toLowerCase() === safeName.toLowerCase());
+                if (!existingKey) {
+                    podiumUsers[safeName] = { subs: 0, bits: 0, tips: 0 };
+                    renderPodiumList();
+                    // Scroll to the bottom to see the newly added user
+                    setTimeout(() => {
+                        const list = document.getElementById('podiumUserList');
+                        list.scrollTop = list.scrollHeight;
+                    }, 100);
+                } else {
+                    alert('Este apoiante já existe na tabela (com o nome "' + existingKey + '")!');
+                }
+            }
+        };
+
+        window.syncSheets = function() {
+            if (confirm('Isto irá extrair e calcular todos os totais atuais do teu Google Sheets e substituir o Pódio. Continuar?')) {
+                fetch('/api/sync-sheets')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) alert('Erro: ' + data.error);
+                    else alert(`Sucesso! Pódio sincronizado com ${data.count} pessoas vindas do Google Sheets.`);
+                }).catch(e => {
+                    alert('Erro ao sincronizar. Garante que o URL do Sheets está correto na aba de Setup.');
+                });
+            }
+        };
+
+        window.resetPodium = function() {
+            if (confirm('Tens a certeza que queres resetar o pódio? Todos os dados de Subs, Bits e Tips de todos os utilizadores serão apagados e não poderão ser recuperados.')) {
+                podiumUsers = {};
+                renderPodiumList();
+                
+                const newSubathon = {
+                    currentSubs: parseInt(document.getElementById('subathonCurrentSubs') ? document.getElementById('subathonCurrentSubs').value : (currentSubathonData?.currentSubs || 0)),
+                    visibleCount: parseInt(document.getElementById('subathonVisibleCount') ? document.getElementById('subathonVisibleCount').value : (currentSubathonData?.visibleCount || 3)),
+                    goals: currentSubathonGoals || (currentSubathonData?.goals || []),
+                    userStats: podiumUsers
+                };
+                socket.emit('updateSubathon', newSubathon);
+                alert('Pódio resetado com sucesso!');
+            }
+        };
+
+        // Hook into the global save button logic via a hack to save user stats
+        const originalSave = document.getElementById('btnSave').onclick;
+        document.getElementById('btnSave').onclick = () => {
+            // Send subathon data with updated user stats
+            const newSubathon = {
+                currentSubs: parseInt(document.getElementById('subathonCurrentSubs') ? document.getElementById('subathonCurrentSubs').value : (currentSubathonData?.currentSubs || 0)),
+                visibleCount: parseInt(document.getElementById('subathonVisibleCount') ? document.getElementById('subathonVisibleCount').value : (currentSubathonData?.visibleCount || 3)),
+                goals: currentSubathonGoals || (currentSubathonData?.goals || []),
+                userStats: podiumUsers
+            };
+            socket.emit('updateSubathon', newSubathon);
+            
+            // If it's the podium page, also show a nice alert since originalSave won't fire updateSubathon properly for our custom podiumUsers object
+            alert('Definições do Pódio guardadas com sucesso!');
+        };
+    </script>
+</body>
+</html>
+
+

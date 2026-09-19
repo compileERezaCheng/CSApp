@@ -1,0 +1,210 @@
+=== COMO LIGAR O TTV TIMER AO GOOGLE SHEETS ===
+
+Este guia explica como o teu timer vai enviar os dados separados por linhas para uma folha do Google Sheets, e também como ler esses dados de volta para o Pódio da app!
+
+--- PASSO 1: Criar o Google Sheet ---
+1. Abre o Google Sheets no browser e cria uma folha em branco. Podes chamar-lhe "Estatisticas Subathon".
+2. No menu superior, clica em: Extensoes > Apps Script.
+
+--- PASSO 2: Colar o Codigo ---
+3. Vai abrir um editor de codigo. Apaga todo o texto que la estiver e cola o codigo abaixo (só precisas de alterar o SHEET_NAME no topo se a tua aba tiver outro nome!):
+
+// ==========================================
+// CONFIGURAÇÃO: Nome da aba da folha (altera aqui se mudares de ano/nome de aba)
+// ==========================================
+var SHEET_NAME = "2026";
+
+function getTargetSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (SHEET_NAME && SHEET_NAME.trim() !== "") {
+    var s = ss.getSheetByName(SHEET_NAME.trim());
+    if (s) return s;
+  }
+  return ss.getSheets()[0]; // Fallback: usa a primeira aba se o nome não for encontrado
+}
+
+function doPost(e) {
+  var sheet = getTargetSheet();
+  if (!sheet) return ContentService.createTextOutput("Erro: Aba nao encontrada");
+  
+  var data = JSON.parse(e.postData.contents);
+  var baseHeaders = ["Data", "Nome", "Subs T1", "Subs T2", "Subs T3", "Gift Subs T1", "Gift Subs T2", "Gift Subs T3", "Bits", "Ko-Fi", "Tips", "Follow", "Raids"];
+  var lastRow = sheet.getLastRow();
+  
+  if (lastRow === 0) {
+    sheet.appendRow(baseHeaders);
+    sheet.getRange(1, 1, 1, baseHeaders.length).setFontWeight("bold");
+    lastRow = 1;
+  }
+  
+  // Extrai apenas o dia (ex: "19-09-2026") para verificar se mudou o dia da stream
+  var currentDay = data.day || (data.date ? String(data.date).split(" ")[0] : "");
+  
+  var lastActualDay = "";
+  if (lastRow > 0) {
+    var checkRow = lastRow;
+    while(checkRow > 0) {
+      var val = sheet.getRange(checkRow, 1).getDisplayValue();
+      if (val !== "" && val !== "Data") {
+        lastActualDay = val.split(" ")[0];
+        break;
+      }
+      checkRow--;
+    }
+  }
+
+  // Se mudou de dia, adiciona linha em branco e novo cabeçalho para separar os dias
+  if (lastActualDay !== "" && currentDay !== "" && lastActualDay !== currentDay) {
+    sheet.appendRow([""]);
+    sheet.appendRow(baseHeaders);
+    sheet.getRange(sheet.getLastRow(), 1, 1, baseHeaders.length).setFontWeight("bold");
+  }
+  
+  // Procura a linha de cabeçalhos mais recente (do bloco de hoje)
+  var headerRow = 1;
+  for (var r = sheet.getLastRow(); r >= 1; r--) {
+    var firstVal = String(sheet.getRange(r, 1).getDisplayValue() || '').trim();
+    if (firstVal.toLowerCase() === "data") {
+      headerRow = r;
+      break;
+    }
+  }
+  
+  // Procura se o utilizador já tem linha registada hoje (abaixo de headerRow)
+  var rowIndex = -1;
+  for (var r = sheet.getLastRow(); r > headerRow; r--) {
+    var rowName = sheet.getRange(r, 2).getDisplayValue();
+    if (rowName.toLowerCase() === data.username.toLowerCase()) {
+      rowIndex = r;
+      break;
+    }
+  }
+  
+  if (rowIndex === -1) {
+    var newRow = new Array(baseHeaders.length).fill("");
+    newRow[0] = data.date; // Ex: "19-09-2026 18:05"
+    newRow[1] = data.username;
+    sheet.appendRow(newRow);
+    rowIndex = sheet.getLastRow();
+  } else {
+    // Atualiza a célula de Data para a hora mais recente do evento
+    sheet.getRange(rowIndex, 1).setValue(data.date);
+  }
+  
+  var colIndex = -1;
+  var lastCol = sheet.getLastColumn();
+  if (lastCol > 0) {
+    var headerRowValues = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
+    for (var c = 0; c < headerRowValues.length; c++) {
+      var h = String(headerRowValues[c] || '').trim().toLowerCase();
+      var t = String(data.type || '').trim().toLowerCase();
+      if (h === t || (t === 'follow' && h === 'follows') || (t === 'follows' && h === 'follow')) {
+        colIndex = c + 1;
+        break;
+      }
+    }
+  }
+  
+  // Fallback caso não encontre pelo cabeçalho
+  if (colIndex === -1) {
+    var tLower = String(data.type || '').trim().toLowerCase();
+    for (var b = 0; b < baseHeaders.length; b++) {
+      var bh = baseHeaders[b].toLowerCase();
+      if (bh === tLower || (tLower === 'follow' && bh === 'follows')) {
+        colIndex = b + 1;
+        break;
+      }
+    }
+  }
+  
+  if (colIndex > 0) {
+    var cell = sheet.getRange(rowIndex, colIndex);
+    var currentVal = cell.getValue();
+    currentVal = (currentVal === "" || isNaN(currentVal)) ? 0 : parseFloat(currentVal);
+    cell.setValue(currentVal + parseFloat(data.amount));
+  }
+  return ContentService.createTextOutput("OK (col=" + colIndex + ", row=" + rowIndex + ", tipo=" + data.type + ")");
+}
+
+function doGet(e) {
+  var sheet = getTargetSheet();
+  if (!sheet) return ContentService.createTextOutput(JSON.stringify({error: "Aba nao encontrada"})).setMimeType(ContentService.MimeType.JSON);
+  
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return ContentService.createTextOutput(JSON.stringify({})).setMimeType(ContentService.MimeType.JSON);
+  
+  var colMap = {};
+  function updateHeaders(row) {
+    colMap = {};
+    for (var c = 0; c < row.length; c++) {
+      var h = String(row[c] || '').trim();
+      if (h) colMap[h.toLowerCase()] = c;
+    }
+  }
+  updateHeaders(data[0]);
+  
+  var users = {};
+  
+  function getVal(row, key) {
+    var idx = colMap[key.toLowerCase()];
+    if (idx === undefined) return 0;
+    var v = parseFloat(row[idx]);
+    return isNaN(v) ? 0 : v;
+  }
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row || row.length === 0) continue;
+    
+    // Se for uma linha que repete cabeçalhos (novo dia):
+    var firstCol = String(row[0] || '').trim();
+    if (firstCol.toLowerCase() === "data") {
+      updateHeaders(row);
+      continue;
+    }
+    
+    var nameIdx = colMap["nome"];
+    var rawName = nameIdx !== undefined ? String(row[nameIdx] || '').trim() : '';
+    if (!rawName || rawName.toLowerCase() === "nome") continue;
+    
+    // Unificação case-insensitive dos nomes
+    var existingKey = Object.keys(users).find(function(k) {
+      return k.toLowerCase() === rawName.toLowerCase();
+    });
+    var safeName = existingKey || rawName;
+    if (!users[safeName]) users[safeName] = { subs: 0, bits: 0, tips: 0 };
+    
+    // Suporta tanto as colunas novas separadas como as antigas
+    var subsT1 = getVal(row, "subs t1") + getVal(row, "subs");
+    var subsT2 = getVal(row, "subs t2");
+    var subsT3 = getVal(row, "subs t3");
+    var giftsT1 = getVal(row, "gift subs t1") + getVal(row, "gift subs");
+    var giftsT2 = getVal(row, "gift subs t2");
+    var giftsT3 = getVal(row, "gift subs t3");
+    
+    var totalSubs = subsT1 + subsT2 + subsT3 + giftsT1 + giftsT2 + giftsT3;
+    var totalBits = getVal(row, "bits");
+    var totalTips = getVal(row, "ko-fi") + getVal(row, "tips");
+    
+    users[safeName].subs += totalSubs;
+    users[safeName].bits += totalBits;
+    users[safeName].tips += totalTips;
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(users)).setMimeType(ContentService.MimeType.JSON);
+}
+
+--- PASSO 3: Gerar o Link Magico ---
+4. Clica no botao Guardar (icone da disquete) la em cima.
+5. Clica no botao azul grande "Implementar" (Deploy) > "Nova implementacao". (SE JÁ TINHAS UMA IMPLEMENTAÇÃO, CLICA EM "Nova Implementação" NA MESMA PARA GERAR UM LINK FRESCO COM A FUNÇÃO DOGET!).
+6. No tipo (icone da engrenagem), escolhe "Aplicacao Web" (Web App).
+7. Em "Quem tem acesso", muda obrigatoriamente para "Qualquer pessoa".
+8. Clica em "Implementar".
+9. Copia o "URL da Aplicacao Web". E um link comprido que comeca por https://script.google.com/...
+
+--- PASSO 4: Colar no teu TTV Timer ---
+10. Abre o teu Painel de Administracao do TTV Timer.
+11. Vai a aba "Seguranca" e cola o link que copiaste no campo "Google Sheets Webhook URL".
+12. Clica em "Guardar Settings"!
+
+Pronto! Agora podes usar o botao "Sync Sheets" no Painel do Pódio.
