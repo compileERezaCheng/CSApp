@@ -1,106 +1,112 @@
-# 🕒 CSApp - Streamer Hub (Subathon & Overlays)
+# CSApp - Streamer Hub
 
-> **A central local de controlo e overlays interativos para transmissões na Twitch.**
-> Temporizador dinâmico de Subathon, Fila de Objetivos animada, Pódio de Apoiantes, Roleta de Desafios, sincronização automática com Google Sheets e um Editor Visual de Overlays no browser.
+A local control center and interactive overlay suite for Twitch broadcasts. Includes a dynamic Subathon timer, animated Goals Queue, Top Supporters Podium, challenge roulette wheel, Google Sheets synchronization, and a browser-based visual overlay editor.
 
 ---
 
-## ✨ Principais Funcionalidades
+### Download & Installation
 
-### ⏱️ 1. Subathon Timer em Tempo Real
-- **Cálculo Automático de Tempo:** Adiciona tempo instantaneamente para eventos da Twitch e StreamElements:
-  - Subs Normais e Gift Subs (com suporte configurável para Tiers 1, 2 e 3).
-  - *Debounce* de Sub Bombs (agrupa dezenas de gifts num único evento claro).
+To download the ready-to-use Windows installer:
+
+👉 **[Download the Latest Setup Installer](https://github.com/compileERezaCheng/CSApp/releases/latest)**
+
+1. Download `CSApp_v2.4.9.exe` (or the latest version) from the **Assets** section of the latest release.
+2. Run the installer to set up CSApp on your computer.
+3. Start the application via the Desktop shortcut or `Iniciar-CSApp.bat`.
+4. The dashboard will automatically open in your browser at `http://localhost:3000`.
+
+---
+
+## Features
+
+### Subathon Timer
+- Automatic time addition from Twitch and StreamElements events:
+  - Regular Subs and Gift Subs (with configurable time per Tier 1, 2, and 3).
+  - Sub bomb debounce (bundles multiple gifts into a single notification).
   - Bits / Cheers.
-  - Doações em dinheiro (Tips) e Ko-fi.
-  - Follows e Raids (com tempo base e tempo por espectador).
-- **Controlos de Emergência:** Pausar/Retomar relógio, adicionar ou subtrair tempo manual e repor valores.
+  - Tips and Ko-fi donations.
+  - Follows and Raids (with configurable base time and viewer multiplier).
+- Manual emergency controls: pause, resume, add, subtract, or reset time.
 
-### 🎯 2. Fila de Objetivos Animada (Goals Queue)
-- Acompanhamento automático de progresso de metas por número de subs ou por valor monetário.
-- **Animações Fluidas no OBS:** Objetivos concluídos esperam o tempo configurado, fazem *fade-out* e os próximos sobem suavemente (*slide-up*).
-- Gestão em tempo real no Dashboard: Adicionar, editar, reordenar (Drag & Drop) e remover objetivos sem reiniciar nada.
+### Animated Goals Queue
+- Track subathon progress by total subs or monetary value.
+- Smooth transitions for OBS: completed goals hold for a configurable delay, fade out, and smoothly slide up upcoming goals.
+- Real-time management: add, edit, reorder via drag-and-drop, and remove goals without restarting.
 
-### 🏆 3. Pódio de Top Apoiantes (Podium Widget)
-- Alternância automática e animada a cada 10 segundos entre:
-  - 🥇 **Top Subs**
-  - 💎 **Top Bits**
-  - 💸 **Top Donos / Tips**
-- Orientação Horizontal ou Vertical para encaixar em qualquer layout de OBS.
-- Unificação inteligente de apoiantes (*case-insensitive*) para evitar perfis duplicados.
+### Supporters Podium Widget
+- Auto-cycling display (every 10 seconds) between:
+  - Top Subs
+  - Top Bits
+  - Top Donos / Tips
+- Horizontal and vertical layout modes.
+- Case-insensitive supporter matching to prevent duplicate profiles.
 
-### 🎡 4. Roleta Interativa (Custom Wheel)
-- Sistema completo de Roleta personalizável com física e aceleração em HTML5 Canvas.
-- Criação de perfis independentes (ex: *Desafios*, *Castigos*, *Sub Goals*).
-- Pesos e probabilidades configuráveis por opção.
-- Pop-up com anúncio do vencedor e opção para desativar a opção sorteada.
+### Interactive Custom Roulette
+- HTML5 Canvas wheel with realistic spin physics and deceleration.
+- Multiple independent profiles (e.g., Challenges, Punishments, Sub Goals).
+- Configurable option weights and probabilities.
+- Winner announcement pop-up with option to temporarily deactivate winning items.
 
-### 🎨 5. Editor de Design Visual (Estilo Figma no Browser)
-- Constrói o visual do teu overlay diretamente na página web com Drag & Drop e redimensionamento interativo.
-- Suporte para imagens locais, textos personalizados com fontes customizadas (`.ttf`, `.otf`), cores, sombras (*glow*) e bordas.
-- **Ferramenta de Recorte (Crop):** Corta imagens e personaliza o fundo da Fila de Objetivos de forma não-destrutiva.
+### In-Browser Visual Overlay Editor
+- Visual layout designer with live preview canvas (1920x1080).
+- Drag-and-drop element positioning, interactive resizing, and layer management.
+- Custom fonts (`.ttf`, `.otf`), text styling, colors, glow effects, and borders.
+- Non-destructive image cropping tool for overlay assets and goal queue backgrounds.
 
-### 📊 6. Sincronização com Google Sheets
-- Registo automático de cada evento numa folha de cálculo com colunas dedicadas (`Subs T1`, `Subs T2`, `Subs T3`, `Gift Subs T1..T3`, `Bits`, `Ko-Fi`, `Tips`, `Follow`, `Raids`).
-- Separação diária automática de blocos e gravação de data e hora (`DD-MM-YYYY HH:mm`).
-- Botão **Sync Sheets** no Pódio para carregar e recalcular os totais históricos a partir do Google Sheets.
+### Google Sheets Synchronization
+- Automatic real-time logging into dedicated columns (`Subs T1..T3`, `Gift Subs T1..T3`, `Bits`, `Ko-Fi`, `Tips`, `Follow`, `Raids`).
+- Automatic daily grouping with exact event timestamps (`DD-MM-YYYY HH:mm`).
+- One-click **Sync Sheets** button on the Podium dashboard to load and aggregate historical totals.
 
-### 🌐 7. Painel de Moderadores & Dual Tunnel
-- **Túnel Cloudflare:** Acesso remoto seguro ao painel de moderadores (`/mod.html`) protegido por palavra-passe, permitindo aos teus mods gerir o timer e os objetivos sem terem acesso ao teu computador.
-- **Túnel Ko-fi:** Webhook dedicado via localtunnel para integração estável de doações.
+### Moderator Panel & Dual Tunnel Architecture
+- **Cloudflare Tunnel:** Secure password-protected remote moderator dashboard (`/mod.html`), allowing trusted mods to control the timer and goals without network exposure.
+- **Ko-fi Tunnel:** Dedicated localtunnel endpoint for webhook event processing.
 
 ---
 
-## 🚀 Como Executar
+## OBS Studio Setup
 
-### Pré-requisitos
-- **Windows 10/11 (64-bit)**
-- **Node.js 18+** *(apenas se quiseres correr a partir do código-fonte)*
+Add a **Browser Source** in OBS Studio with a resolution of **1920x1080** for each widget:
 
-### Opção A: Executável Pronto (Recomendado)
-1. Faz o download do instalador ou da versão compilada (`CSApp_Server.exe`).
-2. Executa o ficheiro **`Iniciar-CSApp.bat`**.
-3. O teu browser abrirá automaticamente o Dashboard em `http://localhost:3000`.
+| Overlay Widget | OBS Browser Source URL |
+| :--- | :--- |
+| **Timer** | `http://localhost:3000/overlay/timer` |
+| **Goals Queue** | `http://localhost:3000/overlay/goals` |
+| **Podium** | `http://localhost:3000/overlay/podium` |
+| **Roulette** | `http://localhost:3000/overlay/roulette` |
 
-### Opção B: A partir do Código-Fonte (Desenvolvimento)
+---
+
+## Running from Source (Development)
+
+### Prerequisites
+- Windows 10/11 (64-bit)
+- Node.js 18 or higher
+
 ```bash
-# 1. Instalar as dependências
+# 1. Install dependencies
 npm install
 
-# 2. Configurar o ficheiro de dados
-cp data.example.json data.json
+# 2. Set up initial configuration
+copy data.example.json data.json
 
-# 3. Iniciar o servidor
+# 3. Start the server
 node server.js
 ```
 
 ---
 
-## 🖥️ Overlays no OBS Studio
+## Tech Stack
 
-Para adicionar qualquer widget ao OBS Studio, cria uma fonte de **Navegador (Browser Source)** com resolução **1920x1080** (ou personalizada) e o seguinte URL:
-
-| Widget | URL no OBS |
-| :--- | :--- |
-| **Temporizador** | `http://localhost:3000/overlay/timer` |
-| **Fila de Objetivos** | `http://localhost:3000/overlay/goals` |
-| **Pódio** | `http://localhost:3000/overlay/podium` |
-| **Roleta** | `http://localhost:3000/overlay/roulette` |
+- **Runtime & Server:** Node.js, Express
+- **Real-Time Communication:** Socket.IO
+- **Tunnels:** Cloudflare Tunnel (`cloudflared`), localtunnel
+- **Frontend:** Vanilla JavaScript, HTML5 Canvas, Modern CSS
+- **Interaction Engine:** Interact.js
+- **Packaging & Installer:** Vercel pkg, Inno Setup 7
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## License
 
-- **Backend:** [Node.js](https://nodejs.org/) & [Express](https://expressjs.com/)
-- **Tempo Real:** [Socket.IO](https://socket.io/)
-- **Túneis Remotos:** [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) & [localtunnel](https://github.com/localtunnel/localtunnel)
-- **Frontend:** Vanilla JavaScript, HTML5 Canvas, CSS moderno
-- **Drag & Drop / Resize:** [Interact.js](https://interactjs.io/)
-- **Instalador:** [Inno Setup 7](https://jrsoftware.org/isinfo.php)
-- **Compilação Executável:** [pkg](https://github.com/vercel/pkg)
-
----
-
-## 📄 Licença
-
-Este projeto é disponibilizado para uso pessoal e comunitário. Para distribuição comercial ou integração em serviços pagos, contacta o autor.
+This project is available for personal and community use. For commercial distribution or customized integrations, please contact the author.
