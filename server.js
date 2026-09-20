@@ -34,14 +34,52 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
+const DATA_BAK_FILE = path.join(process.cwd(), 'data.json.bak');
 const LOG_FILE = path.join(process.cwd(), 'logs.txt');
+
+function parseDataSafe(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  let content = fs.readFileSync(filePath, 'utf8');
+  // Remover UTF-8 BOM (\uFEFF) se presente (comum em ficheiros editados no Notepad)
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  // Remover bytes nulos e espaços em branco desnecessários
+  content = content.replace(/\0/g, '').trim();
+  if (!content) return {};
+  return JSON.parse(content);
+}
 
 let savedData = {};
 try {
   if (fs.existsSync(DATA_FILE)) {
-    savedData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    try {
+      const parsed = parseDataSafe(DATA_FILE);
+      if (parsed) savedData = parsed;
+    } catch (parseErr) {
+      console.error('Erro a ler dados guardados de data.json:', parseErr);
+      // Backup do ficheiro com erro para não perder dados originais
+      try {
+        const corruptBackup = path.join(process.cwd(), `data.corrupted.${Date.now()}.json`);
+        fs.copyFileSync(DATA_FILE, corruptBackup);
+        console.warn(`[Aviso] Cópia de segurança do ficheiro corrompido guardada em: ${path.basename(corruptBackup)}`);
+      } catch (bkErr) {}
+
+      // Tentar recuperar do backup .bak se existir
+      if (fs.existsSync(DATA_BAK_FILE)) {
+        try {
+          const bakParsed = parseDataSafe(DATA_BAK_FILE);
+          if (bakParsed) {
+            savedData = bakParsed;
+            console.log('[Recuperação] Dados recuperados com sucesso a partir de data.json.bak!');
+          }
+        } catch (bakErr) {
+          console.error('Erro ao tentar recuperar de data.json.bak:', bakErr);
+        }
+      }
+    }
   }
-} catch (e) { console.error('Erro a ler dados guardados:', e); }
+} catch (e) { console.error('Erro geral ao processar dados guardados:', e); }
 
 let timerSeconds = savedData.timerSeconds !== undefined ? savedData.timerSeconds : 3600;
 let isRunning = false;
@@ -169,9 +207,40 @@ function checkSubathonGoals() {
 }
 
 function saveData() {
-  fs.writeFile(DATA_FILE, JSON.stringify({ timerSeconds, settings, subathonData }), err => {
-    if (err) console.error('Erro a guardar dados:', err);
-  });
+  try {
+    const payload = JSON.stringify({ timerSeconds, settings, subathonData }, null, 2);
+    const tmpFile = DATA_FILE + '.tmp';
+
+    // 1. Escrever primeiro num ficheiro temporário
+    fs.writeFile(tmpFile, payload, 'utf8', (err) => {
+      if (err) {
+        // Fallback para escrita direta caso haja restrições na criação do .tmp
+        fs.writeFile(DATA_FILE, payload, 'utf8', (wErr) => {
+          if (wErr) console.error('Erro a guardar dados:', wErr);
+        });
+        return;
+      }
+
+      // 2. Fazer backup da versão anterior válida antes de sobrescrever
+      if (fs.existsSync(DATA_FILE)) {
+        try {
+          fs.copyFileSync(DATA_FILE, DATA_BAK_FILE);
+        } catch (bErr) {}
+      }
+
+      // 3. Substituição atómica do ficheiro
+      fs.rename(tmpFile, DATA_FILE, (renameErr) => {
+        if (renameErr) {
+          // Fallback caso rename encontre bloqueio temporário no Windows
+          fs.writeFile(DATA_FILE, payload, 'utf8', (wErr) => {
+            if (wErr) console.error('Erro a guardar dados:', wErr);
+          });
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Erro geral ao guardar dados:', err);
+  }
 }
 
 function logAction(user, action) {

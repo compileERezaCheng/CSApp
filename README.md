@@ -10,7 +10,7 @@ To download the ready-to-use Windows installer:
 
 👉 **[Download the Latest Setup Installer](https://github.com/compileERezaCheng/CSApp/releases/latest)**
 
-1. Download `CSApp_v2.4.9.exe` (or the latest version) from the **Assets** section of the latest release.
+1. Download `CSApp_v2.4.10.exe` (or the latest version) from the **Assets** section of the latest release.
 2. Run the installer to set up CSApp on your computer.
 3. Start the application via the Desktop shortcut or `Iniciar-CSApp.bat`.
 4. The dashboard will automatically open in your browser at `http://localhost:3000`.
