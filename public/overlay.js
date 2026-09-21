@@ -304,8 +304,11 @@ socket.on('subathonUpdated', (d) => {
     const oldGoals = currentSubathonData ? currentSubathonData.goals : [];
     currentSubathonData = d;
     
-    // Find newly completed goals
+    // Find newly completed goals and clean reset goals
     d.goals.forEach(newG => {
+        if (!newG.completed && animatingGoals.has(newG.id)) {
+            animatingGoals.delete(newG.id);
+        }
         const oldG = oldGoals.find(o => o.id === newG.id);
         if (oldG && !oldG.completed && newG.completed) {
             // It just completed!

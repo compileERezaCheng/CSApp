@@ -767,7 +767,7 @@ app.post('/kofi-webhook', (req, res) => {
   res.sendStatus(200);
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 7331;
 
 function startServer() {
   cleanOrphanUploads(false);

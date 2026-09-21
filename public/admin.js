@@ -51,6 +51,16 @@ let isRunning = false;
 let currentUser = 'Desconhecido';
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
+// Sincronizar inputs de overlay local com a porta/origem atual
+const currentOrigin = window.location.origin;
+['localOverlayLink', 'localOverlayLinkGoals', 'localOverlayLinkPodium', 'localOverlayLinkRoulette'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        const mode = id === 'localOverlayLink' ? 'timer' : id.replace('localOverlayLink', '').toLowerCase();
+        el.value = `${currentOrigin}/overlay/${mode}`;
+    }
+});
+
 const isMod = !isLocal;
 
 if (isMod) {

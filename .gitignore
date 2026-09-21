@@ -2,7 +2,8 @@
 # FICHEIROS PRIVADOS E DADOS LOCAIS DO STREAMER
 # ===============================================
 # Contém tokens StreamElements, webhooks e passwords locais
-data.json
+data.json*
+data.corrupted*
 logs.txt
 
 # Contexto de desenvolvimento privado do autor

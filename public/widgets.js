@@ -66,6 +66,15 @@ function renderSubathonGoals(container, gqConfig) {
     const phase1Wait = fadeSpeedMs * 0.8;
     
     existingItems.forEach(el => {
+        if (el._exitTimer1) {
+            clearTimeout(el._exitTimer1);
+            el._exitTimer1 = null;
+        }
+        if (el._exitTimer2) {
+            clearTimeout(el._exitTimer2);
+            el._exitTimer2 = null;
+        }
+
         if (!keepIds.has(el.dataset.id)) {
             hasExiting = true;
             // Lock height
@@ -81,14 +90,14 @@ function renderSubathonGoals(container, gqConfig) {
             el.style.transform = 'translateY(-10px)';
             
             // Phase 2: Collapse space (triggers slide up of remaining items)
-            setTimeout(() => {
+            el._exitTimer1 = setTimeout(() => {
                 el.style.transition = `max-height ${slideSpeed}s cubic-bezier(0.4, 0, 0.2, 1), margin ${slideSpeed}s cubic-bezier(0.4, 0, 0.2, 1), padding ${slideSpeed}s cubic-bezier(0.4, 0, 0.2, 1)`;
                 el.style.maxHeight = '0px';
                 el.style.margin = '0px';
                 el.style.padding = '0px';
                 
                 // Phase 3: Remove from DOM
-                setTimeout(() => el.remove(), slideSpeedMs);
+                el._exitTimer2 = setTimeout(() => el.remove(), slideSpeedMs);
             }, phase1Wait);
         } else {
             // Apply new transition speed to existing items as well
@@ -98,17 +107,28 @@ function renderSubathonGoals(container, gqConfig) {
     
     const delayNewItems = hasExiting ? phase1Wait : 0;
     
-    toShow.forEach(g => {
+    toShow.forEach((g, idx) => {
         let displaySubs = currentSubs;
         if (currentSubs > g.target) displaySubs = g.target;
         
         let itemEl = container.querySelector(`.gq-item[data-id="${g.id}"]`);
+        const isNew = !itemEl;
         
         const itemPadding = gqConfig.itemPadding !== undefined ? gqConfig.itemPadding : 0;
         const itemBg = gqConfig.itemBgImage ? `url("${gqConfig.itemBgImage}")` : 'none';
         const itemHeight = gqConfig.itemHeight ? parseInt(gqConfig.itemHeight) : 0;
         
-        if (!itemEl) {
+        let formattedDisplay = displaySubs;
+        let formattedTarget = g.target;
+        
+        // Note: currentSettings is globally available in overlay.js/design.js
+        if (typeof currentSettings !== 'undefined' && currentSettings) {
+            const prefix = currentSettings.goalPrefix ? currentSettings.goalPrefix + ' ' : '';
+            formattedDisplay = prefix + formattedDisplay;
+            formattedTarget = prefix + formattedTarget;
+        }
+
+        if (isNew) {
             itemEl = document.createElement('div');
             itemEl.className = 'gq-item';
             itemEl.dataset.id = g.id;
@@ -127,19 +147,64 @@ function renderSubathonGoals(container, gqConfig) {
             itemEl.style.opacity = '0';
             itemEl.style.transform = 'translateY(15px)';
             
-            let formattedDisplay = displaySubs;
-            let formattedTarget = g.target;
-            
-            // Note: currentSettings is globally available in overlay.js/design.js
-            if (typeof currentSettings !== 'undefined' && currentSettings) {
-                const prefix = currentSettings.goalPrefix ? currentSettings.goalPrefix + ' ' : '';
-                formattedDisplay = prefix + formattedDisplay;
-                formattedTarget = prefix + formattedTarget;
-            }
-            
             itemEl.innerHTML = `<span>${g.title}</span><span>${formattedDisplay} / ${formattedTarget}</span>`;
-            container.appendChild(itemEl);
+        } else {
+            // Real-time style updates
+            itemEl.style.padding = itemPadding + 'px';
+            if (itemHeight > 0) {
+                itemEl.style.minHeight = itemHeight + 'px';
+                itemEl.style.alignItems = 'center';
+            } else {
+                itemEl.style.minHeight = '0px';
+            }
+            itemEl.style.backgroundImage = itemBg;
             
+            if (g.animating) {
+                itemEl.style.textDecoration = 'line-through';
+                itemEl.style.opacity = '0.5';
+                itemEl.style.color = completedColor;
+            } else {
+                itemEl.style.textDecoration = 'none';
+                itemEl.style.opacity = '1';
+                itemEl.style.color = ''; 
+                itemEl.style.maxHeight = 'none';
+                itemEl.style.overflow = 'visible';
+                itemEl.style.transform = 'none';
+            }
+            itemEl.innerHTML = `<span>${g.title}</span><span>${formattedDisplay} / ${formattedTarget}</span>`;
+        }
+
+        // Ensure DOM ordering matches toShow
+        let nextEl = null;
+        for (let j = idx + 1; j < toShow.length; j++) {
+            const nextCandidate = container.querySelector(`.gq-item[data-id="${toShow[j].id}"]`);
+            if (nextCandidate) {
+                nextEl = nextCandidate;
+                break;
+            }
+        }
+
+        if (nextEl) {
+            if (itemEl.nextSibling !== nextEl) {
+                container.insertBefore(itemEl, nextEl);
+            }
+        } else {
+            let prevEl = null;
+            if (idx > 0) {
+                prevEl = container.querySelector(`.gq-item[data-id="${toShow[idx - 1].id}"]`);
+            }
+            if (prevEl) {
+                if (prevEl.nextSibling !== itemEl) {
+                    container.insertBefore(itemEl, prevEl.nextSibling);
+                }
+            } else {
+                if (itemEl.parentElement !== container) {
+                    container.appendChild(itemEl);
+                }
+            }
+        }
+
+        if (isNew) {
             // Calculate natural height
             itemEl.style.maxHeight = 'none';
             const naturalHeight = itemEl.offsetHeight;
@@ -165,31 +230,6 @@ function renderSubathonGoals(container, gqConfig) {
                     }
                 }, Math.max(slideSpeedMs, fadeSpeedMs));
             }, delayNewItems);
-            
-        } else {
-            // Keep in original position to prevent layout shifting bugs
-            
-            // Real-time style updates
-            itemEl.style.padding = itemPadding + 'px';
-            if (itemHeight > 0) {
-                itemEl.style.minHeight = itemHeight + 'px';
-                itemEl.style.alignItems = 'center';
-            } else {
-                itemEl.style.minHeight = '0px';
-            }
-            itemEl.style.backgroundImage = itemBg;
-            
-            if (g.animating) {
-                itemEl.style.textDecoration = 'line-through';
-                itemEl.style.opacity = '0.5';
-                itemEl.style.color = completedColor;
-                displaySubs = g.target;
-            } else {
-                itemEl.style.textDecoration = 'none';
-                itemEl.style.opacity = '1';
-                itemEl.style.color = ''; 
-            }
-            itemEl.innerHTML = `<span>${g.title}</span><span>${displaySubs} / ${g.target}</span>`;
         }
     });
 }

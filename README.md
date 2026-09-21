@@ -13,7 +13,7 @@ To download the ready-to-use Windows installer:
 1. Download `CSApp_v2.4.10.exe` (or the latest version) from the **Assets** section of the latest release.
 2. Run the installer to set up CSApp on your computer.
 3. Start the application via the Desktop shortcut or `Iniciar-CSApp.bat`.
-4. The dashboard will automatically open in your browser at `http://localhost:3000`.
+4. The dashboard will automatically open in your browser at `http://localhost:7331`.
 
 ---
 
@@ -70,10 +70,10 @@ Add a **Browser Source** in OBS Studio with a resolution of **1920x1080** for ea
 
 | Overlay Widget | OBS Browser Source URL |
 | :--- | :--- |
-| **Timer** | `http://localhost:3000/overlay/timer` |
-| **Goals Queue** | `http://localhost:3000/overlay/goals` |
-| **Podium** | `http://localhost:3000/overlay/podium` |
-| **Roulette** | `http://localhost:3000/overlay/roulette` |
+| **Timer** | `http://localhost:7331/overlay/timer` |
+| **Goals Queue** | `http://localhost:7331/overlay/goals` |
+| **Podium** | `http://localhost:7331/overlay/podium` |
+| **Roulette** | `http://localhost:7331/overlay/roulette` |
 
 ---
 

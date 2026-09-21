@@ -11,7 +11,7 @@ echo AVISO: Nao feches esta janela preta!
 echo Podes simplesmente minimiza-la para a barra de tarefas.
 echo.
 echo O teu painel vai abrir automaticamente no browser.
-echo Se nao abrir, vai manualmente a: http://localhost:3000
+echo Se nao abrir, vai manualmente a: http://localhost:7331
 echo.
 echo ===================================================
 
