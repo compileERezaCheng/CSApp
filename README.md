@@ -10,20 +10,20 @@ To download the ready-to-use Windows installer:
 
 👉 **[Download the Latest Setup Installer](https://github.com/compileERezaCheng/CSApp/releases/latest)**
 
-1. Download `CSApp_v2.4.12.exe` (or the latest version) from the **Assets** section of the latest release.
+1. Download `CSApp_v2.4.13.exe` (or the latest version) from the **Assets** section of the latest release.
 2. Run the installer to set up CSApp on your computer.
 3. Start the application via the Desktop shortcut or `Iniciar-CSApp.bat`.
 4. The dashboard will automatically open in your browser at `http://localhost:7331`.
 
 ---
 
-## Recent Updates (v2.4.12)
+## Recent Updates (v2.4.13)
 
-- **Goals Queue Ordering Fix:** Resetting the counter to 0 now restores the first goal to the top of the queue instead of appending it below subsequent goals.
-- **Animation Safety:** Goals that are re-activated before exit animations complete now cancel removal timers immediately, preventing accidental removal or strike-through styles.
-- **Dedicated Port (7331):** The default port was moved from 3000 to 7331 (with `process.env.PORT` support) to avoid port clashes with common web development environments.
-- **Dynamic OBS Link Detection:** Dashboard inputs now adapt automatically to the current runtime host and port.
-- **OBS Script Cache Refresh:** Overlay scripts now include updated version parameters (`?v=4`) to ensure OBS loads the latest code.
+- **Power-Cut Resilient Storage (Anti-Corrupção de Dados):**
+  - **Deteção Rigorosa de Ficheiro Vazio/Corrompido:** Ficheiros com 0 bytes, bytes nulos (`\0`) ou estruturas `{}` vazias deixam de ser considerados válidos, forçando a recuperação automática a partir do backup.
+  - **Recuperação Automática Multinível:** Restaura dados automaticamente de `data.json.bak` ou `data.json.bak2`, gerando cópia forense `data.corrupted.<timestamp>.json` e sincronizando de imediato o ficheiro principal.
+  - **Garantia de Persistência com `fsync`:** Gravação síncrona com `fs.fsyncSync` antes de substituir ficheiros, forçando a descarga da cache de RAM do Windows diretamente para os setores físicos do disco.
+  - **Proteção Concorrente e Backup Seguro:** Evita conflitos de I/O em gravações simultâneas e só atualiza os backups se o ficheiro atual contiver dados íntegros e não-vazios.
 
 ---
 

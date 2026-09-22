@@ -1,4 +1,4 @@
-#define MyAppVersion "2.4.12"
+#define MyAppVersion "2.4.13"
 
 [Setup]
 ; Informações da Aplicação

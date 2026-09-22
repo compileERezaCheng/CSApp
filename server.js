@@ -35,10 +35,24 @@ const io = new Server(server);
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 const DATA_BAK_FILE = path.join(process.cwd(), 'data.json.bak');
+const DATA_BAK2_FILE = path.join(process.cwd(), 'data.json.bak2');
 const LOG_FILE = path.join(process.cwd(), 'logs.txt');
+
+function isDataValid(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+  return (
+    obj.timerSeconds !== undefined ||
+    (obj.settings && typeof obj.settings === 'object' && Object.keys(obj.settings).length > 0) ||
+    (obj.subathonData && typeof obj.subathonData === 'object' && Object.keys(obj.subathonData).length > 0)
+  );
+}
 
 function parseDataSafe(filePath) {
   if (!fs.existsSync(filePath)) return null;
+  const stats = fs.statSync(filePath);
+  if (stats.size === 0) {
+    throw new Error(`Ficheiro vazio (0 bytes): ${path.basename(filePath)}`);
+  }
   let content = fs.readFileSync(filePath, 'utf8');
   // Remover UTF-8 BOM (\uFEFF) se presente (comum em ficheiros editados no Notepad)
   if (content.charCodeAt(0) === 0xFEFF) {
@@ -46,8 +60,14 @@ function parseDataSafe(filePath) {
   }
   // Remover bytes nulos e espaços em branco desnecessários
   content = content.replace(/\0/g, '').trim();
-  if (!content) return {};
-  return JSON.parse(content);
+  if (!content) {
+    throw new Error(`Ficheiro sem conteúdo legível: ${path.basename(filePath)}`);
+  }
+  const parsed = JSON.parse(content);
+  if (!isDataValid(parsed)) {
+    throw new Error(`Ficheiro não contém estrutura de dados válida: ${path.basename(filePath)}`);
+  }
+  return parsed;
 }
 
 let savedData = {};
@@ -57,25 +77,40 @@ try {
       const parsed = parseDataSafe(DATA_FILE);
       if (parsed) savedData = parsed;
     } catch (parseErr) {
-      console.error('Erro a ler dados guardados de data.json:', parseErr);
-      // Backup do ficheiro com erro para não perder dados originais
+      console.error(`[Aviso Crítico] Falha ao carregar ${path.basename(DATA_FILE)}:`, parseErr.message);
+      // Backup do ficheiro com erro para não perder dados originais para análise
       try {
         const corruptBackup = path.join(process.cwd(), `data.corrupted.${Date.now()}.json`);
         fs.copyFileSync(DATA_FILE, corruptBackup);
         console.warn(`[Aviso] Cópia de segurança do ficheiro corrompido guardada em: ${path.basename(corruptBackup)}`);
       } catch (bkErr) {}
 
-      // Tentar recuperar do backup .bak se existir
-      if (fs.existsSync(DATA_BAK_FILE)) {
-        try {
-          const bakParsed = parseDataSafe(DATA_BAK_FILE);
-          if (bakParsed) {
-            savedData = bakParsed;
-            console.log('[Recuperação] Dados recuperados com sucesso a partir de data.json.bak!');
+      // Tentar recuperar do backup .bak ou .bak2 se existirem
+      let recovered = false;
+      const backupFiles = [DATA_BAK_FILE, DATA_BAK2_FILE];
+      for (const bFile of backupFiles) {
+        if (!recovered && fs.existsSync(bFile)) {
+          try {
+            const bakParsed = parseDataSafe(bFile);
+            if (bakParsed) {
+              savedData = bakParsed;
+              recovered = true;
+              console.log(`[Recuperação] Sucesso! Dados recuperados a partir de ${path.basename(bFile)}.`);
+              // Restaurar imediatamente o data.json com os dados saudáveis do backup
+              try {
+                fs.copyFileSync(bFile, DATA_FILE);
+                console.log(`[Recuperação] ${path.basename(DATA_FILE)} restaurado e sincronizado a partir de ${path.basename(bFile)}.`);
+              } catch (rErr) {}
+              break;
+            }
+          } catch (bakErr) {
+            console.error(`[Recuperação] Backup ${path.basename(bFile)} inválido:`, bakErr.message);
           }
-        } catch (bakErr) {
-          console.error('Erro ao tentar recuperar de data.json.bak:', bakErr);
         }
+      }
+
+      if (!recovered) {
+        console.error('[ERRO] Nenhum backup válido encontrado! A iniciar com definições padrão.');
       }
     }
   }
@@ -206,40 +241,80 @@ function checkSubathonGoals() {
   return changed;
 }
 
+let isSaving = false;
+let pendingSave = false;
+
 function saveData() {
+  if (isSaving) {
+    pendingSave = true;
+    return;
+  }
+  isSaving = true;
+  pendingSave = false;
+
   try {
     const payload = JSON.stringify({ timerSeconds, settings, subathonData }, null, 2);
     const tmpFile = DATA_FILE + '.tmp';
 
-    // 1. Escrever primeiro num ficheiro temporário
-    fs.writeFile(tmpFile, payload, 'utf8', (err) => {
-      if (err) {
-        // Fallback para escrita direta caso haja restrições na criação do .tmp
-        fs.writeFile(DATA_FILE, payload, 'utf8', (wErr) => {
-          if (wErr) console.error('Erro a guardar dados:', wErr);
-        });
-        return;
+    // 1. Escrita síncrona no ficheiro temporário com fsync para forçar persistência em disco físico
+    let fd;
+    try {
+      fd = fs.openSync(tmpFile, 'w');
+      fs.writeSync(fd, payload, 0, 'utf8');
+      fs.fsyncSync(fd);
+    } finally {
+      if (fd !== undefined) {
+        try { fs.closeSync(fd); } catch (e) {}
       }
+    }
 
-      // 2. Fazer backup da versão anterior válida antes de sobrescrever
-      if (fs.existsSync(DATA_FILE)) {
-        try {
+    // 2. Verificar integridade do .tmp antes de alterar ficheiros existentes
+    const tmpStats = fs.statSync(tmpFile);
+    if (tmpStats.size < 10) {
+      throw new Error('Ficheiro temporário gerado é inválido ou vazio.');
+    }
+
+    // 3. Fazer backup da versão anterior válida antes de sobrescrever
+    if (fs.existsSync(DATA_FILE)) {
+      try {
+        const curStats = fs.statSync(DATA_FILE);
+        // Só copia se o ficheiro tiver conteúdo (> 10 bytes)
+        if (curStats.size > 10) {
+          if (fs.existsSync(DATA_BAK_FILE)) {
+            try { fs.copyFileSync(DATA_BAK_FILE, DATA_BAK2_FILE); } catch (e2) {}
+          }
           fs.copyFileSync(DATA_FILE, DATA_BAK_FILE);
-        } catch (bErr) {}
-      }
-
-      // 3. Substituição atómica do ficheiro
-      fs.rename(tmpFile, DATA_FILE, (renameErr) => {
-        if (renameErr) {
-          // Fallback caso rename encontre bloqueio temporário no Windows
-          fs.writeFile(DATA_FILE, payload, 'utf8', (wErr) => {
-            if (wErr) console.error('Erro a guardar dados:', wErr);
-          });
         }
-      });
-    });
+      } catch (bErr) {}
+    }
+
+    // 4. Substituição atómica do ficheiro
+    let replaced = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        fs.renameSync(tmpFile, DATA_FILE);
+        replaced = true;
+        break;
+      } catch (rErr) {
+        // No Windows, pausas breves resolvem bloqueios temporários (ex: OneDrive / Indexer)
+        const end = Date.now() + 30;
+        while (Date.now() < end) {}
+      }
+    }
+
+    if (!replaced) {
+      // Fallback seguro se renameSync falhar devido a bloqueio do sistema operativo
+      fs.copyFileSync(tmpFile, DATA_FILE);
+      try { fs.unlinkSync(tmpFile); } catch (uErr) {}
+    }
   } catch (err) {
     console.error('Erro geral ao guardar dados:', err);
+  } finally {
+    isSaving = false;
+    if (pendingSave) {
+      pendingSave = false;
+      setImmediate(saveData);
+    }
   }
 }
 
