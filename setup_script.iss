@@ -21,14 +21,14 @@ PrivilegesRequired=lowest
 ; Copia todos os ficheiros da nossa pasta para a pasta de instalação
 ; Ignora a pasta do instalador, o git, o script, e os teus dados/logs privados! 
 ; Agora ignora também os node_modules, código fonte, ficheiros temporários e de contexto porque empacotámos tudo num executável!
-Source: "*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "Instalador\*,setup_script.iss,.git\*,data.json,logs.txt,node_modules\*,server.js,fix*.js,temp.js,package*.json,temp\*,CONTEXTO_PROJETO.md,diff.txt,README.md,public\uploads\*"
+Source: "*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "Instalador\*,setup_script.iss,.git\*,data.json,logs.txt,server.stdout.log,server.stderr.log,node_modules\*,server.js,plugin-store.js,test\*,fix*.js,temp.js,package*.json,temp\*,CONTEXTO_PROJETO.md,diff.txt,README.md,public\uploads\*"
 
 [Icons]
-; Cria um atalho no Ambiente de Trabalho que vai abrir o nosso ficheiro .bat!
-Name: "{autodesktop}\CSApp"; Filename: "{app}\Iniciar-CSApp.bat"; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"
+; Arranca o ícone da bandeja sem abrir uma janela de consola
+Name: "{autodesktop}\CSApp"; Filename: "{app}\Iniciar-CSApp.vbs"; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"
 ; Atalho no menu iniciar
-Name: "{group}\CSApp"; Filename: "{app}\Iniciar-CSApp.bat"; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"
+Name: "{group}\CSApp"; Filename: "{app}\Iniciar-CSApp.vbs"; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"
 
 [Run]
 ; No fim de instalar, pergunta se quer já abrir o painel
-Filename: "{app}\Iniciar-CSApp.bat"; Description: "Ligar o CSApp agora"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Iniciar-CSApp.vbs"; Description: "Ligar o CSApp agora"; Flags: shellexec nowait postinstall skipifsilent

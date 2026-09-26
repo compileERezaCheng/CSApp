@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const readline = require('readline');
 const https = require('https');
+const plugins = require('./plugin-store');
 
 function logToGoogleSheets(type, amount, username) {
   if (!settings.googleSheetUrl || !settings.googleSheetUrl.startsWith('https://script.google.com/')) return;
@@ -118,6 +119,7 @@ try {
 
 let timerSeconds = savedData.timerSeconds !== undefined ? savedData.timerSeconds : 3600;
 let isRunning = false;
+let shuttingDown = false;
 const eventHistory = [];
 const defaultSettings = {
   seToken: '',
@@ -143,6 +145,23 @@ if (savedData.settings && savedData.settings.design && !savedData.settings.desig
 let settings = { ...defaultSettings, ...(savedData.settings || {}) };
 if (!settings.designs) settings.designs = defaultSettings.designs;
 if (!settings.modPassword) settings.modPassword = '123';
+
+let timeEventId = 0;
+function emitSound(type) { io.emit('eventSound', { id: ++timeEventId, type }); }
+function timerCap() {
+  const hours = Number(settings.maxTimerHours);
+  return Number.isFinite(hours) && hours > 0 ? Math.floor(hours * 3600) : Infinity;
+}
+function setTimerSeconds(seconds, eventType) {
+  if (!Number.isFinite(seconds)) return false;
+  const before = timerSeconds;
+  timerSeconds = Math.max(0, Math.min(seconds, timerCap()));
+  if (timerSeconds !== before) io.emit('timeUpdate', timerSeconds);
+  if (before > 0 && timerSeconds === 0) io.emit('timerEnded', ++timeEventId);
+  if (eventType && timerSeconds > before) io.emit('timeAdded', { id: ++timeEventId, type: eventType, seconds: timerSeconds - before });
+  return timerSeconds !== before;
+}
+setTimerSeconds(timerSeconds);
 
 function cleanOrphanUploads(onlyOld = true) {
   try {
@@ -247,7 +266,7 @@ let pendingSave = false;
 function saveData() {
   if (isSaving) {
     pendingSave = true;
-    return;
+    return false;
   }
   isSaving = true;
   pendingSave = false;
@@ -307,8 +326,10 @@ function saveData() {
       fs.copyFileSync(tmpFile, DATA_FILE);
       try { fs.unlinkSync(tmpFile); } catch (uErr) {}
     }
+    return true;
   } catch (err) {
     console.error('Erro geral ao guardar dados:', err);
+    return false;
   } finally {
     isSaving = false;
     if (pendingSave) {
@@ -342,7 +363,7 @@ app.use((req, res, next) => {
     '/timer', '/timer.html',
     '/goals', '/goals.html',
     '/podium', '/podium.html',
-    '/design', '/design.html', '/design.js'
+    '/design', '/design.html', '/design.js', '/plugins', '/plugins.html', '/plugins.js'
   ];
   if (protectedPaths.includes(req.path)) {
     const authHeader = req.headers.authorization;
@@ -394,9 +415,92 @@ app.get('/design/:mode', (req, res) => {
 app.get('/overlay/:mode', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'overlay.html'));
 });
+app.get('/plugins', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'plugins.html')));
+app.get('/overlay/plugin/:id', (req, res) => {
+  if (!plugins.get(req.params.id) || !settings.plugins?.[req.params.id]?.enabled) return res.sendStatus(404);
+  res.sendFile(path.join(process.cwd(), 'public', 'plugin-host.html'));
+});
+app.get('/plugin-file/:id/:file', (req, res) => {
+  const plugin = plugins.get(req.params.id);
+  if (!plugin || !settings.plugins?.[plugin.id]?.enabled || !['overlay.html', 'config.html'].includes(req.params.file)) return res.sendStatus(404);
+  res.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data:; connect-src 'none'; frame-ancestors 'self'");
+  res.sendFile(path.join(plugins.root, plugin.id, req.params.file));
+});
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/api/plugins', (req, res, next) => {
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) return res.sendStatus(403);
+  next();
+});
+app.get('/api/plugins', (req, res) => res.json(plugins.list().map(p => ({ ...p, enabled: !!settings.plugins?.[p.id]?.enabled }))));
+app.get('/api/plugins/:id/public', (req, res) => {
+  const p = plugins.get(req.params.id);
+  if (!p || !settings.plugins?.[p.id]?.enabled) return res.sendStatus(404);
+  res.json({ manifest: p, config: settings.plugins[p.id].config || {} });
+});
+app.post('/api/plugins/install', (req, res) => {
+  try {
+    const match = /^data:application\/(zip|x-zip-compressed);base64,([A-Za-z0-9+/=]+)$/.exec(req.body?.zipBase64 || '');
+    if (!match) return res.status(400).json({ error: 'ZIP inválido' });
+    const p = plugins.install(Buffer.from(match[2], 'base64'));
+    settings.plugins ||= {};
+    settings.plugins[p.id] = { enabled: false, config: {} };
+    if (!saveData()) return res.status(500).json({ error: 'Não foi possível guardar o plugin' });
+    res.json(p);
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.post('/api/plugins/:id', (req, res) => {
+  const p = plugins.get(req.params.id);
+  if (!p) return res.sendStatus(404);
+  if (typeof req.body?.enabled !== 'boolean') return res.sendStatus(400);
+  settings.plugins ||= {};
+  const previous = settings.plugins[p.id];
+  settings.plugins[p.id] = { ...settings.plugins[p.id], enabled: req.body.enabled };
+  if (!saveData()) { settings.plugins[p.id] = previous; return res.status(500).json({ error: 'Não foi possível guardar o plugin' }); }
+  io.emit('pluginState', { id: p.id, enabled: req.body.enabled });
+  res.json(settings.plugins[p.id]);
+});
+app.post('/api/plugins/:id/config', (req, res) => {
+  const p = plugins.get(req.params.id);
+  const config = req.body?.config;
+  if (!p) return res.sendStatus(404);
+  if (!config || Array.isArray(config) || typeof config !== 'object' || JSON.stringify(config).length > 4096 ||
+      Object.entries(config).some(([key, value]) => !/^[a-zA-Z][a-zA-Z0-9_]{0,39}$/.test(key) || /(token|password|secret|api_?key)/i.test(key) || !['string', 'number', 'boolean'].includes(typeof value) || String(value).length > 500)) return res.sendStatus(400);
+  settings.plugins ||= {};
+  const previous = settings.plugins[p.id];
+  settings.plugins[p.id] = { ...settings.plugins[p.id], config };
+  if (!saveData()) { settings.plugins[p.id] = previous; return res.status(500).json({ error: 'Não foi possível guardar o plugin' }); }
+  io.emit('pluginConfig', { id: p.id, config });
+  res.json(settings.plugins[p.id]);
+});
+
+// Só o launcher local, com o token criado para esta execução, pode controlar a bandeja.
+app.use('/api/tray', (req, res, next) => {
+  const address = req.socket.remoteAddress;
+  if (!process.env.CSAPP_TRAY_TOKEN || !['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(address) ||
+      req.get('x-csapp-tray-token') !== process.env.CSAPP_TRAY_TOKEN) return res.sendStatus(403);
+  next();
+});
+
+app.get('/api/tray', (req, res) => res.json({ isRunning }));
+app.post('/api/tray/toggle', (req, res) => {
+  isRunning = !isRunning;
+  logAction('Bandeja', isRunning ? 'Iniciou o relógio' : 'Pausou o relógio');
+  io.emit('timerState', isRunning);
+  res.json({ isRunning });
+});
+app.post('/api/tray/exit', (req, res) => {
+  const wasRunning = isRunning;
+  isRunning = false;
+  if (!saveData()) {
+    isRunning = wasRunning;
+    return res.status(500).send('Não foi possível guardar o estado.');
+  }
+  res.sendStatus(200);
+  setImmediate(shutdown);
+});
 
 app.post('/api/upload', (req, res) => {
   const { imageBase64 } = req.body;
@@ -436,6 +540,25 @@ app.post('/api/upload-font', (req, res) => {
       if (err) return res.status(500).send('Save error');
       res.json({ url: '/uploads/' + finalName });
   });
+});
+
+app.post('/api/sounds/:type', (req, res) => {
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) return res.sendStatus(403);
+  if (!['sub', 'gift', 'bits', 'tip', 'kofi', 'follow', 'raid', 'manual'].includes(req.params.type)) return res.sendStatus(400);
+  const match = /^data:audio\/(mpeg|mp3|ogg|wav|x-wav|wave|vnd\.wave);base64,([A-Za-z0-9+/=]+)$/.exec(req.body?.audioBase64 || '');
+  if (!match) return res.status(400).json({ error: 'Formato inválido (MP3, OGG ou WAV).' });
+  const bytes = Buffer.from(match[2], 'base64');
+  if (!bytes.length || bytes.length > 1024 * 1024) return res.status(400).json({ error: 'Máximo: 1 MB.' });
+  const kind = bytes.toString('ascii', 0, 4);
+  const ext = kind === 'RIFF' && bytes.length >= 44 && bytes.toString('ascii', 8, 12) === 'WAVE' && bytes.toString('ascii', 12, 16) === 'fmt ' && [1, 3].includes(bytes.readUInt16LE(20)) ? 'wav'
+    : kind === 'OggS' && bytes.length >= 27 && bytes[4] === 0 ? 'ogg'
+    : kind === 'ID3' && bytes.length >= 10 || bytes.length >= 4 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0 ? 'mp3' : null;
+  if (!ext) return res.status(400).json({ error: 'Áudio inválido.' });
+  const dir = path.join(process.cwd(), 'public', 'uploads', 'sounds');
+  fs.mkdirSync(dir, { recursive: true });
+  const name = `${req.params.type}-${Date.now()}.${ext}`;
+  fs.writeFileSync(path.join(dir, name), bytes);
+  res.json({ url: `/uploads/sounds/${name}` });
 });
 
 app.get('/api/sync-sheets', (req, res) => {
@@ -502,18 +625,20 @@ async function startLocaltunnel(newName) {
   console.log(`A iniciar localtunnel (subdomain: ${newName})... Isto pode demorar 1-2 minutos!`);
   localtunnel({ port: PORT, subdomain: newName })
     .then(tunnel => {
+        if (shuttingDown) { tunnel.close(); return; }
         kofiTunnel = tunnel;
         currentKofiUrl = tunnel.url;
         io.emit('kofiUrl', currentKofiUrl);
         console.log(`\n[+] Túnel Ko-fi online: ${currentKofiUrl}/kofi-webhook\n`);
 
         tunnel.on('close', () => {
-            if (tunnel.isManualClose) return;
+            if (tunnel.isManualClose || shuttingDown) return;
             console.log('Túnel Ko-fi fechado! A tentar reconectar em 5 segundos...');
             setTimeout(() => startLocaltunnel(newName), 5000);
         });
     })
     .catch(err => {
+        if (shuttingDown) return;
         console.error('Erro no localtunnel:', err);
         setTimeout(() => startLocaltunnel(newName), 5000);
     });
@@ -534,8 +659,8 @@ async function startCloudflare(newName) {
   const baseDir = isPkg ? path.dirname(process.execPath) : process.cwd();
   const cfPath = path.join(baseDir, 'cloudflared.exe');
   
-  const { exec } = require('child_process');
-  const tunnelProcess = exec(`"${cfPath}" tunnel --url http://localhost:${PORT}`);
+  const { spawn } = require('child_process');
+  const tunnelProcess = spawn(cfPath, ['tunnel', '--url', `http://localhost:${PORT}`], { windowsHide: true });
   currentTunnel = tunnelProcess;
   
   tunnelProcess.stderr.on('data', (data) => {
@@ -551,10 +676,11 @@ async function startCloudflare(newName) {
   });
   
   tunnelProcess.on('close', () => {
-    if (tunnelProcess.isManualClose) return;
+    if (tunnelProcess.isManualClose || shuttingDown) return;
     console.log('Túnel Cloudflare fechado ou caiu! A tentar reconectar em 5 segundos...');
     setTimeout(() => startCloudflare(newName), 5000);
   });
+  tunnelProcess.on('error', (err) => console.error('Erro no túnel Cloudflare:', err));
 }
 
 async function startTunnels(newName) {
@@ -565,8 +691,7 @@ async function startTunnels(newName) {
 setInterval(() => {
   if (isRunning) {
     if (timerSeconds > 0) {
-      timerSeconds--;
-      io.emit('timeUpdate', timerSeconds);
+      setTimerSeconds(timerSeconds - 1);
       if (timerSeconds % 5 === 0) saveData();
     }
     
@@ -595,8 +720,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('updateSettings', (data) => {
+    if (!data?.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) return;
     const oldTunnelName = settings.tunnelName;
+    if (Object.hasOwn(data.settings, 'maxTimerHours')) {
+      const hours = Number(data.settings.maxTimerHours);
+      if (data.settings.maxTimerHours !== '' && (!Number.isFinite(hours) || hours < 0 || hours > 8760)) return;
+    }
     settings = { ...settings, ...data.settings };
+    setTimerSeconds(timerSeconds);
     saveData();
     cleanOrphanUploads(true);
     logAction(data.user, 'Alterou as definições do timer');
@@ -609,29 +740,46 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('updateDesign', (d) => {
+  socket.on('updateDesign', (d, ack) => {
+    const key = { timer: 'timer', goals: 'goalsQueue', podium: 'podium', roulette: 'roulette' }[d?.mode];
+    const design = d?.data;
+    if (!key || !design || typeof design !== 'object' || Array.isArray(design) ||
+        !Array.isArray(design.images) || !Array.isArray(design.texts) || !Array.isArray(design.fonts) ||
+        !design[key] || typeof design[key] !== 'object' || JSON.stringify(design).length > 1024 * 1024) {
+      if (ack) ack({ error: 'Design inválido' });
+      return;
+    }
     if (!settings.designs) settings.designs = {};
+    const previous = settings.designs[d.mode];
     settings.designs[d.mode] = d.data;
-    saveData();
+    if (!saveData()) {
+      if (previous === undefined) delete settings.designs[d.mode];
+      else settings.designs[d.mode] = previous;
+      if (ack) ack({ error: 'Não foi possível guardar o design' });
+      return;
+    }
     cleanOrphanUploads(true);
     logAction(d.user, `Atualizou o design de: ${d.mode}`);
     io.emit('settingsUpdated', settings);
+    if (ack) ack({ ok: true });
   });
 
   socket.on('setTimer', (data) => { 
-    timerSeconds = data.seconds; 
+    const seconds = Number(data?.seconds);
+    if (!Number.isFinite(seconds)) return;
+    setTimerSeconds(seconds);
     saveData(); 
     logAction(data.user, `Fez reset ao timer para ${data.seconds}s`);
-    io.emit('timeUpdate', timerSeconds); 
   });
   
   socket.on('addTime', (data) => { 
-    timerSeconds += data.seconds; 
-    if(timerSeconds < 0) timerSeconds = 0; 
+    const seconds = Number(data.seconds);
+    if (!Number.isFinite(seconds)) return;
+    if (seconds > 0) emitSound('manual');
+    setTimerSeconds(timerSeconds + seconds, seconds > 0 ? 'manual' : null);
     saveData(); 
     const acao = data.seconds >= 0 ? `Adicionou ${data.seconds}s` : `Removeu ${Math.abs(data.seconds)}s`;
     logAction(data.user, acao);
-    io.emit('timeUpdate', timerSeconds); 
     // Emits alert on manual adds to trigger flash!
     if (data.seconds > 0) io.emit('eventAlert', `Mod/Streamer adicionou ${data.seconds}s`);
   });
@@ -676,6 +824,7 @@ function connectStreamElements(token) {
   let giftAccumulator = {};
 
 function processSubscriber(user, amt, tier, isGifted) {
+  emitSound(isGifted ? 'gift' : 'sub');
   let timePerSub = settings.subTime;
   if (tier === '2000' && settings.subTimeT2 !== undefined) {
       timePerSub = settings.subTimeT2;
@@ -704,9 +853,8 @@ function processSubscriber(user, amt, tier, isGifted) {
   logToGoogleSheets(`${prefix} T${tier.charAt(0) || '1'}`, amt, user);
 
   if (timeToAdd > 0) {
-    timerSeconds += timeToAdd;
+    setTimerSeconds(timerSeconds + timeToAdd, isGifted ? 'gift' : 'sub');
     logAction('StreamElements', `Recebeu evento (${isGifted ? 'gifted sub' : 'subscriber'}) de ${user} e adicionou ${timeToAdd}s`);
-    io.emit('timeUpdate', timerSeconds);
     io.emit('eventAlert', `StreamElements Adicionou: +${timeToAdd}s`);
   }
   
@@ -788,11 +936,15 @@ function processSubscriber(user, amt, tier, isGifted) {
       logToGoogleSheets('Raids', amt, data.data.username || username);
     }
 
+    if (['cheer', 'tip', 'donation', 'follow', 'follower', 'raid', 'host'].includes(data.type)) {
+      const soundType = data.type === 'cheer' ? 'bits' : data.type === 'tip' || data.type === 'donation' ? 'tip' : data.type === 'follow' || data.type === 'follower' ? 'follow' : 'raid';
+      emitSound(soundType);
+    }
     if (timeToAdd > 0) {
-      timerSeconds += timeToAdd;
+      const soundType = data.type === 'cheer' ? 'bits' : data.type === 'tip' || data.type === 'donation' ? 'tip' : data.type === 'follow' || data.type === 'follower' ? 'follow' : 'raid';
+      setTimerSeconds(timerSeconds + timeToAdd, soundType);
       saveData();
       logAction('StreamElements', `Recebeu evento (${data.type}) de ${username} e adicionou ${timeToAdd}s`);
-      io.emit('timeUpdate', timerSeconds);
       io.emit('eventAlert', `StreamElements Adicionou: +${timeToAdd}s`);
     }
     
@@ -808,16 +960,17 @@ app.post('/kofi-webhook', (req, res) => {
   try {
     const dataObj = req.body.data ? JSON.parse(req.body.data) : req.body;
     if (dataObj.type === 'Test' || dataObj.type === 'Verification') {
+        emitSound('kofi');
         const timeToAdd = 3 * settings.kofiTime;
-        timerSeconds += timeToAdd;
+        setTimerSeconds(timerSeconds + timeToAdd, 'kofi');
         saveData();
         logAction('Ko-fi', `Recebeu doação de TESTE. Adicionou ${timeToAdd}s`);
-        io.emit('timeUpdate', timerSeconds);
         io.emit('eventAlert', `[TESTE] Ko-fi adicionou ${timeToAdd}s!`);
         return res.sendStatus(200);
     }
     const amount = parseFloat(dataObj.amount);
     if (!isNaN(amount) && amount > 0) {
+      emitSound('kofi');
       const username = (dataObj.from_name && typeof dataObj.from_name === 'string') ? dataObj.from_name.trim() : 'Anónimo';
       const uStats = getOrCreateUserStats(username);
       uStats.tips += amount;
@@ -828,10 +981,9 @@ app.post('/kofi-webhook', (req, res) => {
       }
       
       const timeToAdd = amount * settings.kofiTime;
-      timerSeconds += timeToAdd;
+      setTimerSeconds(timerSeconds + timeToAdd, 'kofi');
       saveData();
       logAction('Ko-fi', `Recebeu $${amount}. Adicionou ${timeToAdd}s`);
-      io.emit('timeUpdate', timerSeconds);
       io.emit('eventAlert', `Ko-fi $${amount} adicionou +${timeToAdd}s`);
       logToGoogleSheets('Ko-Fi', amount, username);
       io.emit('subathonUpdated', subathonData);
@@ -844,11 +996,29 @@ app.post('/kofi-webhook', (req, res) => {
 
 const PORT = process.env.PORT || 7331;
 
+function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  isRunning = false;
+  saveData();
+  if (seSocket) seSocket.disconnect();
+  if (kofiTunnel) {
+    kofiTunnel.isManualClose = true;
+    try { kofiTunnel.close(); } catch (err) { console.error('Erro ao fechar Ko-fi:', err); }
+  }
+  if (currentTunnel) {
+    currentTunnel.isManualClose = true;
+    try { currentTunnel.kill(); } catch (err) { console.error('Erro ao fechar Cloudflare:', err); }
+  }
+  io.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 3000).unref();
+}
+
 function startServer() {
   cleanOrphanUploads(false);
   server.listen(PORT, async () => {
     console.log(`\nServidor em http://localhost:${PORT}`);
-    require('child_process').exec(`start http://localhost:${PORT}`);
+    if (!process.env.CSAPP_NO_BROWSER) require('child_process').exec(`start http://localhost:${PORT}`, { windowsHide: true });
     await startTunnels(settings.tunnelName);
     if (settings.seToken) {
       connectStreamElements(settings.seToken);

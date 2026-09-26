@@ -1,0 +1,1 @@
+{"id":"time-badge","name":"Time Badge","version":"1.0.0","overlay":"overlay.html","config":"config.html","events":["timeUpdate","timeAdded"]}

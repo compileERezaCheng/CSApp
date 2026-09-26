@@ -3,6 +3,31 @@ const urlParams = new URLSearchParams(window.location.search);
 const pathMode = window.location.pathname.split('/').pop();
 const currentMode = urlParams.get('mode') || (pathMode !== 'overlay' && pathMode !== 'overlay.html' ? pathMode : 'timer');
 
+const urlOptions = {
+    timer: ['fontSize', 'color', 'bg', 'glow'],
+    goals: ['fontSize', 'color', 'bg'],
+    podium: ['fontSize', 'color'],
+    roulette: ['fontSize', 'arrowColor', 'outlineColor']
+};
+function overlayConfig(saved) {
+    const config = { ...saved };
+    for (const key of urlOptions[currentMode] || []) {
+        const value = urlParams.get(key);
+        if (value === null) continue;
+        if (key === 'fontSize') {
+            if (/^\d+$/.test(value) && Number(value) >= 8 && Number(value) <= 200) config.fontSize = Number(value);
+        } else if (key === 'bg' && value === 'transparent') {
+            config.enableBg = false;
+        } else if (key === 'glow' && value === 'false') {
+            config.glow = 'transparent';
+        } else if (/^#[0-9a-fA-F]{6}$/.test(value) || ['white', 'black', 'red', 'green', 'blue'].includes(value)) {
+            config[key] = value;
+            if (key === 'bg') config.enableBg = true;
+        }
+    }
+    return config;
+}
+
 const timerText = document.getElementById('timerText');
 const widget = document.querySelector('.timer-widget');
 if (widget) {
@@ -36,17 +61,17 @@ function injectCustomFonts(fonts) {
             
             if (currentMode === 'roulette' && typeof renderRouletteWidget === 'function') {
                 const rw = document.getElementById('roulette-widget');
-                if (rw) renderRouletteWidget(rw, currentSettings.rouletteOptions || [], currentSettings.designs.roulette?.roulette || {});
+                if (rw) renderRouletteWidget(rw, (currentSettings.rouletteOptions || []).filter(o => o.active !== false), overlayConfig(currentSettings.designs.roulette?.roulette || {}));
             }
             
             if (currentMode === 'goals' && typeof renderSubathonGoals === 'function') {
                 const gq = document.getElementById('goals-queue-widget');
-                if (gq) renderSubathonGoals(gq, currentSettings.designs.goals?.goalsQueue || {});
+                if (gq) renderSubathonGoals(gq, overlayConfig(currentSettings.designs.goals?.goalsQueue || {}));
             }
             
             if (currentMode === 'podium' && typeof renderPodiumWidget === 'function') {
                 const pw = document.getElementById('podium-widget');
-                if (pw) renderPodiumWidget(pw, currentSettings.designs.podium?.podium || {});
+                if (pw) renderPodiumWidget(pw, overlayConfig(currentSettings.designs.podium?.podium || {}));
             }
         });
     }
@@ -101,7 +126,9 @@ function applySettings(s) {
         if(currentMode === 'goals') s.designs.goals.goalsQueue = {};
         if(currentMode === 'podium') s.designs.podium.podium = { x: 100, y: 100, width: 900, height: 300, fontSize: 24, color: '#ffffff' };
     }
-    const d = s.designs[currentMode];
+    const d = { ...s.designs[currentMode] };
+    const widgetKey = { timer: 'timer', goals: 'goalsQueue', podium: 'podium', roulette: 'roulette' }[currentMode];
+    d[widgetKey] = overlayConfig(d[widgetKey] || {});
     
     injectCustomFonts(d.fonts);
     
@@ -233,7 +260,7 @@ function applySettings(s) {
             document.body.appendChild(rw);
             
             socket.on('spinRouletteClient', () => {
-                if(typeof triggerSpin === 'function') triggerSpin(currentSettings?.rouletteOptions || [], r);
+                if(typeof triggerSpin === 'function') triggerSpin((currentSettings?.rouletteOptions || []).filter(o => o.active !== false), overlayConfig(currentSettings?.designs?.roulette?.roulette || {}));
             });
         }
         
@@ -241,10 +268,10 @@ function applySettings(s) {
         rw.style.left = (r.x !== undefined ? r.x : 560) + 'px';
         rw.style.top = (r.y !== undefined ? r.y : 140) + 'px';
         rw.style.width = (r.width || 800) + 'px';
-        rw.style.height = (r.height || 800) + 'px';
+        rw.style.height = (r.width || 800) + 'px';
         
         if (typeof renderRouletteWidget === 'function') {
-            renderRouletteWidget(rw, currentSettings?.rouletteOptions || [], r);
+            renderRouletteWidget(rw, (currentSettings?.rouletteOptions || []).filter(o => o.active !== false), r);
         }
     }
 
@@ -300,6 +327,45 @@ socket.on('settingsUpdated', (s) => applySettings(s));
 
 socket.on('timeUpdate', (s) => timerText.innerText = format(s));
 
+let lastTimeEvent = 0;
+socket.on('timeAdded', ({ id, type }) => {
+    if (id <= lastTimeEvent) return;
+    lastTimeEvent = id;
+    if (currentMode === 'timer' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const reaction = currentSettings?.designs?.timer?.timer?.reaction;
+        widget.classList.remove('timer-reaction-pulse', 'timer-reaction-bounce');
+        void widget.offsetWidth;
+        if (reaction === 'pulse' || reaction === 'bounce') widget.classList.add(`timer-reaction-${reaction}`);
+    }
+});
+
+let lastSoundEvent = 0;
+socket.on('eventSound', ({ id, type }) => {
+    if (id <= lastSoundEvent) return;
+    lastSoundEvent = id;
+    const sound = currentSettings?.soundEffects?.[type];
+    if (currentMode !== 'timer' || !/^\/uploads\/sounds\/[\w.-]+\.(mp3|ogg|wav)$/.test(sound?.url || '')) return;
+    const audio = new Audio(sound.url);
+    audio.volume = Math.max(0, Math.min(1, Number(sound.volume ?? 1) || 0));
+    audio.play().catch(() => {});
+});
+
+socket.on('timerEnded', () => {
+    if (currentMode !== 'timer' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelector('.timer-confetti')?.remove();
+    const layer = document.createElement('div');
+    layer.className = 'timer-confetti';
+    for (let i = 0; i < 40; i++) {
+        const piece = document.createElement('i');
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.backgroundColor = ['#8b5cf6', '#22c55e', '#fbbf24', '#38bdf8'][i % 4];
+        piece.style.animationDelay = `${Math.random() * .6}s`;
+        layer.appendChild(piece);
+    }
+    document.body.appendChild(layer);
+    setTimeout(() => layer.remove(), 3200);
+});
+
 socket.on('subathonUpdated', (d) => {
     const oldGoals = currentSubathonData ? currentSubathonData.goals : [];
     currentSubathonData = d;
@@ -313,7 +379,7 @@ socket.on('subathonUpdated', (d) => {
         if (oldG && !oldG.completed && newG.completed) {
             // It just completed!
             animatingGoals.add(newG.id);
-            const gqConfig = currentSettings?.designs?.goals?.goalsQueue || {};
+            const gqConfig = overlayConfig(currentSettings?.designs?.goals?.goalsQueue || {});
             const delaySec = gqConfig.completedDelay !== undefined ? parseFloat(gqConfig.completedDelay) : 3;
             setTimeout(() => {
                 animatingGoals.delete(newG.id);
@@ -326,14 +392,14 @@ socket.on('subathonUpdated', (d) => {
 
     const gqWidget = document.getElementById('goals-queue-widget');
     if (gqWidget && currentMode === 'goals') {
-        const gqConfig = currentSettings?.designs?.goals?.goalsQueue || {};
+        const gqConfig = overlayConfig(currentSettings?.designs?.goals?.goalsQueue || {});
         renderSubathonGoals(gqWidget, gqConfig);
     }
 
 
     const pWidget = document.getElementById('podium-widget');
     if (pWidget && currentMode === 'podium') {
-        const pConfig = currentSettings?.designs?.podium?.podium || {};
+        const pConfig = overlayConfig(currentSettings?.designs?.podium?.podium || {});
         renderPodiumWidget(pWidget, pConfig);
     }
 });

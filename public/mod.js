@@ -65,7 +65,7 @@ socket.on('init', (data) => {
 socket.on('timeUpdate', (s) => els.timerText.innerText = format(s));
 socket.on('timerState', (r) => { isRunning = r; els.btnToggle.innerText = isRunning ? 'Pause' : 'Start'; });
 
-socket.on('logEvent', (msg) => {
+function addHistory(msg) {
     const list = document.getElementById('historyList');
     if (list.innerText.includes('Ainda sem atividade') || list.innerText.includes('sem atividade')) list.innerHTML = '';
     const li = document.createElement('li');
@@ -73,7 +73,14 @@ socket.on('logEvent', (msg) => {
     li.style.padding = '4px 0';
     li.innerText = msg;
     list.prepend(li);
+    while (list.children.length > 50) list.lastElementChild.remove();
+}
+
+socket.on('historyInit', (history) => {
+    document.getElementById('historyList').replaceChildren();
+    history.forEach(addHistory);
 });
+socket.on('logEvent', addHistory);
 
 socket.on('eventAlert', (msg) => {
     if (els.enableFlash && !els.enableFlash.checked) return;

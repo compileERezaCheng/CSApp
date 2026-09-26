@@ -1,4 +1,39 @@
 const socket = io({ transports: ['websocket'] });
+const soundTypes = { sub: 'Sub', gift: 'Gift Subs', bits: 'Bits', tip: 'Tip', kofi: 'Ko-fi', follow: 'Follow', raid: 'Raid', manual: 'Manual' };
+let soundEffects = {};
+function renderSounds() {
+    const panel = document.getElementById('soundSettings');
+    if (!panel) return;
+    panel.replaceChildren();
+    for (const [type, label] of Object.entries(soundTypes)) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap';
+        const title = document.createElement('span'); title.textContent = label; title.style.width = '70px';
+        const input = document.createElement('input'); input.type = 'file'; input.accept = 'audio/mpeg,audio/ogg,audio/wav'; input.setAttribute('aria-label', `Som para ${label}`);
+        const volume = document.createElement('input'); volume.type = 'range'; volume.min = 0; volume.max = 100; volume.value = Math.round((soundEffects[type]?.volume ?? 1) * 100); volume.setAttribute('aria-label', `Volume de ${label}`);
+        const preview = document.createElement('button'); preview.className = 'btn secondary'; preview.type = 'button'; preview.textContent = 'Ouvir'; preview.disabled = !soundEffects[type]?.url;
+        const clear = document.createElement('button'); clear.className = 'btn secondary'; clear.type = 'button'; clear.textContent = 'Remover'; clear.disabled = !soundEffects[type]?.url;
+        const save = () => socket.emit('updateSettings', { user: currentUser, settings: { soundEffects } });
+        volume.onchange = () => { soundEffects[type] = { ...soundEffects[type], volume: Number(volume.value) / 100 }; save(); };
+        preview.onclick = () => { const audio = new Audio(soundEffects[type].url); audio.volume = Number(volume.value) / 100; audio.play().catch(() => alert('O browser bloqueou a reprodução.')); };
+        clear.onclick = () => { delete soundEffects[type]; save(); renderSounds(); };
+        input.onchange = () => {
+            const file = input.files[0]; if (!file) return;
+            if (file.size > 1024 * 1024) { alert('Máximo: 1 MB.'); return; }
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const response = await fetch(`/api/sounds/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audioBase64: reader.result }) });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Upload falhou.');
+                    soundEffects[type] = { url: result.url, volume: Number(volume.value) / 100 }; save(); renderSounds();
+                } catch (error) { alert(error.message); }
+            };
+            reader.readAsDataURL(file);
+        };
+        row.append(title, input, volume, preview, clear); panel.appendChild(row);
+    }
+}
 
 const els = {
     timerText: document.getElementById('timerText'),
@@ -22,6 +57,7 @@ const els = {
     followTime: document.getElementById('followTime'),
     raidTime: document.getElementById('raidTime'),
     baseRaidTime: document.getElementById('baseRaidTime'),
+    maxTimerHours: document.getElementById('maxTimerHours'),
     modPassword: document.getElementById('modPassword'),
     btnSave: document.getElementById('btnSave'),
     enableFlash: document.getElementById('enableFlash'),
@@ -175,6 +211,8 @@ socket.on('init', (data) => {
     }
     
     const s = data.settings;
+    soundEffects = structuredClone(s.soundEffects || {});
+    renderSounds();
     if (isLocal) {
         if (els.seToken) els.seToken.value = s.seToken || '';
         if (els.modPassword) els.modPassword.value = s.modPassword || '123';
@@ -191,6 +229,7 @@ socket.on('init', (data) => {
     if (els.followTime) els.followTime.value = s.followTime; 
     if (els.raidTime) els.raidTime.value = s.raidTime;
     if (els.baseRaidTime) els.baseRaidTime.value = s.baseRaidTime !== undefined ? s.baseRaidTime : 0;
+    if (els.maxTimerHours) els.maxTimerHours.value = s.maxTimerHours || 0;
     
     const goalTrackingTypeEl = document.getElementById('goalTrackingType');
     if (goalTrackingTypeEl && s.goalTrackingType) goalTrackingTypeEl.value = s.goalTrackingType;
@@ -371,6 +410,11 @@ if(els.btnSave) els.btnSave.onclick = () => {
     if (els.followTime) newSettings.followTime = parseInt(els.followTime.value, 10) || 0;
     if (els.raidTime) newSettings.raidTime = parseInt(els.raidTime.value, 10) || 0;
     if (els.baseRaidTime) newSettings.baseRaidTime = parseInt(els.baseRaidTime.value, 10) || 0;
+    if (els.maxTimerHours) {
+        const hours = Number(els.maxTimerHours.value);
+        if (!Number.isFinite(hours) || hours < 0 || hours > 8760) { alert('Limite: 0 a 8760 horas.'); return; }
+        newSettings.maxTimerHours = hours;
+    }
     if (els.enableFlash) newSettings.enableFlash = els.enableFlash.checked;
     
     const goalTrackingTypeEl = document.getElementById('goalTrackingType');

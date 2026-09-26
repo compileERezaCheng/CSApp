@@ -35,6 +35,8 @@ input:checked + .slider { background-color: #8b5cf6; }
 input:checked + .slider:before { transform: translateX(20px); }
 
 label { font-size: 13px; color: #cbd5e1; display:block; margin-bottom: 3px;}
+.support-link { display:block; padding:7px 10px; margin-top:6px; border-radius:8px; color:#cbd5e1; background:#334155; text-align:center; text-decoration:none; font-size:12px; }
+.support-link:hover, .support-link:focus-visible { background:#475569; color:#fff; outline:2px solid #8b5cf6; }
 #seStatus { font-size: 12px; background: #334155; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 5px; }
 .link-input { width:100%; text-align:center; background:rgba(0,0,0,0.4); border-color:#8b5cf6; padding:8px; }
 .mt-half { margin-top: 10px; }
@@ -60,6 +62,15 @@ body.overlay-body { background: transparent; color: white; display: flex; flex-d
 
 @keyframes flashGlowStrong { 0% { box-shadow: 0 0 20px 10px #22c55e !important; border-color: #22c55e !important; transform: scale(1.05) !important; } 100% { box-shadow: 0 0 0 0 transparent !important; transform: scale(1) !important; border-color: transparent !important; } }
 .flash-active { animation: flashGlowStrong 0.5s ease-out forwards !important; }
+
+@keyframes timerPulse { 50% { transform: scale(1.08); } }
+@keyframes timerBounce { 40% { transform: translateY(-18px); } 70% { transform: translateY(3px); } }
+.timer-reaction-pulse { animation: timerPulse .6s ease-out; }
+.timer-reaction-bounce { animation: timerBounce .6s ease-out; }
+.timer-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
+.timer-confetti i { position: absolute; top: -20px; width: 10px; height: 16px; animation: confettiFall 2.5s linear forwards; }
+@keyframes confettiFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .timer-reaction-pulse, .timer-reaction-bounce, .timer-confetti i { animation: none !important; } }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }

@@ -317,7 +317,7 @@ function renderElementOnCanvas(item, canvas) {
         el.classList.add('canvas-overlay-timer');
         el.classList.add('resizable-roulette');
         el.style.width = (d.width || 800) + 'px';
-        el.style.height = (d.height || 800) + 'px';
+        el.style.height = (d.width || 800) + 'px';
         el.style.backgroundColor = 'transparent';
         el.style.border = 'none';
         el.style.display = 'flex';
@@ -325,8 +325,7 @@ function renderElementOnCanvas(item, canvas) {
         el.style.justifyContent = 'center';
         
         if (typeof renderRouletteWidget === 'function') {
-            // we don't have current options in design.js easily, just pass dummy
-            renderRouletteWidget(el, [{label:'Opção 1', weight:1, color:'#ef4444'}, {label:'Opção 2', weight:1, color:'#3b82f6'}], d);
+            renderRouletteWidget(el, (baseSettings.rouletteOptions || []).filter(o => o.active !== false), d);
         } else {
             el.innerHTML = '<div style="color:white;text-align:center;margin-top:20px;">[Roulette Placeholder]</div>';
         }
@@ -629,6 +628,8 @@ function updatePropertiesPanel() {
     if (selectedEl.id === 'timer-widget') {
         propTitle.innerHTML = '<div style="display:flex; align-items:center; gap:5px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="8"/><path d="M12 10v4"/><path d="M10 2h4"/><path d="M18.8 6.2l-2-2"/></svg> Timer</div>';
         timerProps.style.display = 'flex';
+        document.getElementById('timerReactionRow').style.display = 'block';
+        document.getElementById('inpTimerReaction').value = designData.timer.reaction || 'none';
         
         document.getElementById('inpFontSize').value = designData.timer.fontSize;
         document.getElementById('inpTimerFontFamily').value = designData.timer.fontFamily || 'Arial';
@@ -644,6 +645,7 @@ function updatePropertiesPanel() {
         if (gp) gp.style.display = 'none';
     } 
     else if (selectedEl.id === 'podium-widget') {
+        document.getElementById('timerReactionRow').style.display = 'none';
         propTitle.innerHTML = '<div style="display:flex; align-items:center; gap:5px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> Pódio</div>';
         timerProps.style.display = 'flex';
         if(podiumProps) podiumProps.style.display = 'flex';
@@ -683,6 +685,7 @@ function updatePropertiesPanel() {
         document.getElementById('inpRouletteArrowColor').value = r.arrowColor || '#ffffff';
     }
     else if (selectedEl.id === 'goals-queue-widget') {
+        document.getElementById('timerReactionRow').style.display = 'none';
         propTitle.innerHTML = '<div style="display:flex; align-items:center; gap:5px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><list cx="12" cy="14" r="8"/><path d="M4 6h16M4 12h16M4 18h16"/></svg> Goals Queue</div>';
         timerProps.style.display = 'flex';
         
@@ -895,6 +898,7 @@ function updateWidgetProp(prop, val) {
 
 document.getElementById('inpFontSize').addEventListener('input', (e) => updateWidgetProp('fontSize', parseInt(e.target.value, 10) || (selectedEl?.id === 'goals-queue-widget' ? 30 : 70)));
 document.getElementById('inpTimerFontFamily').addEventListener('change', (e) => updateWidgetProp('fontFamily', e.target.value));
+document.getElementById('inpTimerReaction').addEventListener('change', (e) => updateWidgetProp('reaction', e.target.value));
 document.getElementById('inpTextColor').addEventListener('input', (e) => updateWidgetProp('color', getRgbaInput('inpTextColor')));
 document.getElementById('inpTextColor_alpha').addEventListener('input', (e) => updateWidgetProp('color', getRgbaInput('inpTextColor')));
 document.getElementById('inpGlowColor').addEventListener('input', (e) => updateWidgetProp('glow', getRgbaInput('inpGlowColor')));
@@ -1829,6 +1833,103 @@ if (currentMode === 'roulette') designData.roulette = {};
     renderCanvas();
     updatePropertiesPanel();
     setTimeout(fitToScreen, 100);
+});
+
+const assetKeys = new Set(['url', 'originalUrl', 'itemBgImage', 'itemBgOriginalImage']);
+async function visitAssets(value, convert) {
+    if (Array.isArray(value)) { for (const item of value) await visitAssets(item, convert); return; }
+    if (!value || typeof value !== 'object') return;
+    for (const [key, item] of Object.entries(value)) {
+        if (assetKeys.has(key) && typeof item === 'string' && item) value[key] = await convert(item, value, key);
+        else await visitAssets(item, convert);
+    }
+}
+function asDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+document.getElementById('btnExportDesign').onclick = async () => {
+    try {
+        const design = JSON.parse(JSON.stringify(designData));
+        await visitAssets(design, async (url) => {
+            if (url.startsWith('data:')) return url;
+            if (!url.startsWith('/uploads/')) throw new Error(`Recurso externo não incluído: ${url}`);
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Recurso indisponível: ${url}`);
+            const blob = await response.blob();
+            if (blob.size > 10 * 1024 * 1024) throw new Error('Um recurso excede 10 MB.');
+            const ext = url.split('.').pop().toLowerCase();
+            const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', ttf: 'font/ttf', otf: 'font/otf' }[ext];
+            if (!mime) throw new Error(`Tipo de recurso não suportado: ${url}`);
+            return asDataUrl(new Blob([blob], { type: mime }));
+        });
+        const json = JSON.stringify({ version: 1, mode: currentMode, design }, null, 2);
+        if (json.length > 20 * 1024 * 1024) throw new Error('Tema excede 20 MB.');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+        link.download = `csapp-${currentMode}-design.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    } catch (error) { alert(`Exportação cancelada: ${error.message}`); }
+};
+document.getElementById('btnImportDesign').onclick = () => document.getElementById('fileImportDesign').click();
+document.getElementById('fileImportDesign').onchange = async (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+        if (file.size > 20 * 1024 * 1024) throw new Error('JSON excede 20 MB.');
+        const pack = JSON.parse(await file.text());
+        const key = { timer: 'timer', goals: 'goalsQueue', podium: 'podium', roulette: 'roulette' }[currentMode];
+        const d = pack.design;
+        const validItems = (items, required) => items.every(item => item && !Array.isArray(item) && typeof item === 'object' &&
+            typeof item[required] === 'string' &&
+            ['x', 'y', 'width', 'height', 'fontSize', 'zIndex'].every(k => item[k] === undefined || Number.isFinite(item[k]) && Math.abs(item[k]) <= 10000));
+        if (pack.version !== 1 || pack.mode !== currentMode || !d || Array.isArray(d) || typeof d !== 'object' ||
+            !Array.isArray(d.images) || !Array.isArray(d.texts) || !Array.isArray(d.fonts) ||
+            !d[key] || typeof d[key] !== 'object' ||
+            [d.images, d.texts, d.fonts].some(a => a.length > 100) ||
+            !validItems(d.images, 'url') || !validItems(d.texts, 'text') ||
+            d.fonts.some(f => !f || typeof f.name !== 'string' || typeof f.url !== 'string') ||
+            Object.keys(d).some(k => !['images', 'texts', 'fonts', key].includes(k))) throw new Error('Estrutura, versão ou widget inválido.');
+        const raw = JSON.stringify(d);
+        if (/"(__proto__|constructor|prototype|seToken|modPassword)"\s*:/.test(raw) || /javascript:/i.test(raw)) throw new Error('Conteúdo inseguro.');
+        await visitAssets(d, async (url) => {
+            if (!/^data:(image\/(png|jpeg|webp|gif)|font\/(ttf|otf)|application\/(x-font-ttf|x-font-otf|octet-stream));base64,[A-Za-z0-9+/=]+$/.test(url) || url.length > 14 * 1024 * 1024) throw new Error('Recurso inválido ou demasiado grande.');
+            return url;
+        });
+        showModal({ title: 'Importar design', message: `Modo: ${currentMode}. ${d.images.length} imagens, ${d.texts.length} textos, ${d.fonts.length} fontes. O design atual será substituído.`, type: 'confirm', confirmText: 'Importar' }, async (yes) => {
+            if (!yes) return;
+            try {
+                await visitAssets(d, async (url, owner) => {
+                    const font = Object.hasOwn(owner, 'name') && Object.hasOwn(owner, 'url');
+                    const endpoint = font ? '/api/upload-font' : '/api/upload';
+                    const body = font ? { filename: `${owner.name}.${/otf/.test(url.slice(0, 50)) ? 'otf' : 'ttf'}`, fontBase64: url } : { imageBase64: url };
+                    const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    if (!response.ok) throw new Error('Falha ao copiar um recurso local.');
+                    return (await response.json()).url;
+                });
+                await new Promise((resolve, reject) => socket.timeout(5000).emit('updateDesign', { mode: currentMode, data: d, user: 'Streamer' }, (error, result) => error || !result?.ok ? reject(new Error(result?.error || 'Servidor não confirmou o design.')) : resolve()));
+                window.saveState();
+                designData = d;
+                injectCustomFonts(d.fonts);
+                loadFontsIntoSelects();
+                selectedEl = null;
+                renderCanvas();
+                updatePropertiesPanel();
+                alert('Design importado e guardado.');
+            } catch (error) { alert(`Importação cancelada: ${error.message}`); }
+        });
+    } catch (error) { alert(`Importação cancelada: ${error.message}`); }
+};
+
+socket.on('settingsUpdated', (settings) => {
+    baseSettings = settings;
+    if (currentMode === 'roulette') renderCanvas();
 });
 
 socket.on('subathonUpdated', (d) => {

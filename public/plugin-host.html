@@ -1,0 +1,20 @@
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;background:transparent;overflow:hidden}</style></head><body>
+<iframe id="plugin" sandbox="allow-scripts" title="Plugin do CSApp"></iframe>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const id = location.pathname.split('/').pop();
+fetch(`/api/plugins/${id}/public`).then(r => { if (!r.ok) throw Error('Plugin indisponível'); return r.json(); }).then(({ manifest, config }) => {
+    const frame = document.getElementById('plugin');
+    let latestTime = 0;
+    frame.onload = () => {
+        frame.contentWindow.postMessage({ type: 'csapp:config', config }, '*');
+        frame.contentWindow.postMessage({ type: 'csapp:event', event: 'timeUpdate', data: latestTime }, '*');
+    };
+    frame.src = `/plugin-file/${id}/overlay.html`;
+    const socket = io({ transports: ['websocket'] });
+    socket.on('init', data => { latestTime = data.timerSeconds; frame.contentWindow?.postMessage({ type: 'csapp:event', event: 'timeUpdate', data: latestTime }, '*'); });
+    socket.on('pluginState', state => { if (state.id === id && !state.enabled) { frame.remove(); socket.disconnect(); } });
+    socket.on('pluginConfig', state => { if (state.id === id) frame.contentWindow?.postMessage({ type: 'csapp:config', config: state.config }, '*'); });
+    for (const event of manifest.events) socket.on(event, data => frame.contentWindow?.postMessage({ type: 'csapp:event', event, data }, '*'));
+}).catch(error => { document.body.textContent = error.message; });
+</script></body></html>

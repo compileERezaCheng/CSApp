@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:transparent;color:white;font:700 40px Arial}#badge{display:inline-block;padding:12px 20px;border-radius:12px;background:#8b5cf6}</style></head><body><div id="badge">00:00:00</div><script>
+let color = '#8b5cf6';
+addEventListener('message', event => {
+  if (event.source !== parent || !event.data) return;
+  if (event.data.type === 'csapp:config') { color = event.data.config.color || color; document.getElementById('badge').style.background = color; }
+  if (event.data.type === 'csapp:event' && event.data.event === 'timeUpdate') {
+    const s = Math.max(0, Number(event.data.data) || 0);
+    document.getElementById('badge').textContent = [Math.floor(s/3600), Math.floor(s%3600/60), Math.floor(s%60)].map(n => String(n).padStart(2,'0')).join(':');
+  }
+});
+</script></body></html>

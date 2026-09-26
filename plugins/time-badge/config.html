@@ -1,0 +1,4 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{background:#0f172a;color:white;font:16px Arial;padding:16px}button{padding:8px;margin-left:8px}</style></head><body><label>Cor do badge <input id="color" type="color" value="#8b5cf6"></label><button id="save">Guardar</button><script>
+addEventListener('message', event => { if (event.source === parent && event.data?.type === 'csapp:config') document.getElementById('color').value = event.data.config.color || '#8b5cf6'; });
+document.getElementById('save').onclick = () => parent.postMessage({ type: 'csapp:saveConfig', config: { color: document.getElementById('color').value } }, '*');
+</script></body></html>
