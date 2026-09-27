@@ -7,13 +7,17 @@ function renderSounds() {
     panel.replaceChildren();
     for (const [type, label] of Object.entries(soundTypes)) {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap';
-        const title = document.createElement('span'); title.textContent = label; title.style.width = '70px';
+        row.className = 'sound-row';
+        const title = document.createElement('span'); title.textContent = label; title.className = 'sound-label';
         const input = document.createElement('input'); input.type = 'file'; input.accept = 'audio/mpeg,audio/ogg,audio/wav'; input.setAttribute('aria-label', `Som para ${label}`);
-        const volume = document.createElement('input'); volume.type = 'range'; volume.min = 0; volume.max = 100; volume.value = Math.round((soundEffects[type]?.volume ?? 1) * 100); volume.setAttribute('aria-label', `Volume de ${label}`);
+        const volumeGroup = document.createElement('div'); volumeGroup.className = 'sound-volume';
+        const volume = document.createElement('input'); volume.type = 'range'; volume.min = 0; volume.max = 100; volume.value = Math.round((soundEffects[type]?.volume ?? 1) * 100); volume.id = `soundVolume-${type}`; volume.setAttribute('aria-label', `Volume de ${label}`); volume.setAttribute('aria-valuetext', `${volume.value}%`);
+        const volumePercent = document.createElement('span'); volumePercent.className = 'sound-volume-percent'; volumePercent.textContent = `${volume.value}%`; volumePercent.setAttribute('aria-hidden', 'true');
+        volumeGroup.append(volume, volumePercent);
         const preview = document.createElement('button'); preview.className = 'btn secondary'; preview.type = 'button'; preview.textContent = 'Ouvir'; preview.disabled = !soundEffects[type]?.url;
         const clear = document.createElement('button'); clear.className = 'btn secondary'; clear.type = 'button'; clear.textContent = 'Remover'; clear.disabled = !soundEffects[type]?.url;
         const save = () => socket.emit('updateSettings', { user: currentUser, settings: { soundEffects } });
+        volume.oninput = () => { volumePercent.textContent = `${volume.value}%`; volume.setAttribute('aria-valuetext', `${volume.value}%`); };
         volume.onchange = () => { soundEffects[type] = { ...soundEffects[type], volume: Number(volume.value) / 100 }; save(); };
         preview.onclick = () => { const audio = new Audio(soundEffects[type].url); audio.volume = Number(volume.value) / 100; audio.play().catch(() => alert('O browser bloqueou a reprodução.')); };
         clear.onclick = () => { delete soundEffects[type]; save(); renderSounds(); };
@@ -31,7 +35,7 @@ function renderSounds() {
             };
             reader.readAsDataURL(file);
         };
-        row.append(title, input, volume, preview, clear); panel.appendChild(row);
+        row.append(title, input, volumeGroup, preview, clear); panel.appendChild(row);
     }
 }
 

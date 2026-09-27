@@ -10,7 +10,7 @@ function post(url, value) { return api(url, { method: 'POST', headers: { 'Conten
 async function refresh() {
     list.replaceChildren();
     for (const plugin of await api('/api/plugins')) {
-        const card = document.createElement('section'); card.className = 'plugin-card';
+        const card = document.createElement('section'); card.className = 'glass-panel plugin-card';
         const title = document.createElement('h2'); title.textContent = `${plugin.name} · ${plugin.version}`;
         const toggle = document.createElement('button'); toggle.className = 'btn primary'; toggle.textContent = plugin.enabled ? 'Desativar' : 'Ativar';
         toggle.onclick = async () => { try { await post(`/api/plugins/${plugin.id}`, { enabled: !plugin.enabled }); refresh(); } catch (error) { status.textContent = error.message; } };
