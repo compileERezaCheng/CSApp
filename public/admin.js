@@ -9,7 +9,12 @@ function renderSounds() {
         const row = document.createElement('div');
         row.className = 'sound-row';
         const title = document.createElement('span'); title.textContent = label; title.className = 'sound-label';
-        const input = document.createElement('input'); input.type = 'file'; input.accept = 'audio/mpeg,audio/ogg,audio/wav'; input.setAttribute('aria-label', `Som para ${label}`);
+        const input = document.createElement('input'); input.type = 'file'; input.accept = 'audio/mpeg,audio/ogg,audio/wav'; input.setAttribute('aria-label', `Som para ${label}`); input.hidden = true;
+        const choose = document.createElement('button'); choose.className = 'btn secondary sound-choose-button'; choose.type = 'button'; choose.setAttribute('aria-label', `Escolher ficheiro de áudio para ${label}`); choose.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Escolher áudio</span>';
+        choose.onclick = () => input.click();
+        const fileControl = document.createElement('div'); fileControl.className = 'sound-file-control';
+        const fileName = document.createElement('span'); fileName.className = 'sound-file-name'; fileName.textContent = soundEffects[type]?.name || (soundEffects[type]?.url ? 'Som configurado' : 'Nenhum ficheiro selecionado');
+        fileControl.append(fileName, choose, input);
         const volumeGroup = document.createElement('div'); volumeGroup.className = 'sound-volume';
         const volume = document.createElement('input'); volume.type = 'range'; volume.min = 0; volume.max = 100; volume.value = Math.round((soundEffects[type]?.volume ?? 1) * 100); volume.id = `soundVolume-${type}`; volume.setAttribute('aria-label', `Volume de ${label}`); volume.setAttribute('aria-valuetext', `${volume.value}%`);
         const volumePercent = document.createElement('span'); volumePercent.className = 'sound-volume-percent'; volumePercent.textContent = `${volume.value}%`; volumePercent.setAttribute('aria-hidden', 'true');
@@ -24,18 +29,19 @@ function renderSounds() {
         input.onchange = () => {
             const file = input.files[0]; if (!file) return;
             if (file.size > 1024 * 1024) { alert('Máximo: 1 MB.'); return; }
+            fileName.textContent = file.name;
             const reader = new FileReader();
             reader.onload = async () => {
                 try {
                     const response = await fetch(`/api/sounds/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audioBase64: reader.result }) });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Upload falhou.');
-                    soundEffects[type] = { url: result.url, volume: Number(volume.value) / 100 }; save(); renderSounds();
+                    soundEffects[type] = { ...soundEffects[type], name: file.name, url: result.url, volume: Number(volume.value) / 100 }; save(); renderSounds();
                 } catch (error) { alert(error.message); }
             };
             reader.readAsDataURL(file);
         };
-        row.append(title, input, volumeGroup, preview, clear); panel.appendChild(row);
+        row.append(title, fileControl, volumeGroup, preview, clear); panel.appendChild(row);
     }
 }
 

@@ -49,7 +49,11 @@ label { font-size: 13px; color: #cbd5e1; display:block; margin-bottom: 3px;}
 .sound-panel { overflow:hidden; }
 .sound-row { display:grid; grid-template-columns:minmax(68px,85px) minmax(160px,1fr) minmax(140px,190px) auto auto; align-items:center; gap:8px; padding:10px 0; border-top:1px solid rgba(255,255,255,0.08); }
 .sound-label { color:#cbd5e1; font-size:13px; font-weight:bold; }
-.sound-row input[type="file"] { min-width:0; padding:6px; font-size:12px; }
+.sound-file-control { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; }
+.sound-file-name { max-width:100%; color:#94a3b8; font-size:11px; line-height:1.3; overflow-wrap:anywhere; }
+.sound-choose-button { display:flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; }
+.sound-choose-button svg { width:15px; height:15px; }
+.sound-choose-button:focus-visible { outline:2px solid #8b5cf6; outline-offset:2px; }
 .sound-volume { display:flex; align-items:center; gap:8px; }
 .sound-volume input[type="range"] { width:100%; padding:0; border:0; background:transparent; accent-color:#8b5cf6; cursor:pointer; }
 .sound-volume-percent { min-width:38px; color:#cbd5e1; text-align:right; font-size:12px; font-variant-numeric:tabular-nums; }
@@ -98,7 +102,7 @@ body.overlay-body { background: transparent; color: white; display: flex; flex-d
 .timer-confetti i { position: absolute; top: -20px; width: 10px; height: 16px; animation: confettiFall 2.5s linear forwards; }
 @keyframes confettiFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .timer-reaction-pulse, .timer-reaction-bounce, .timer-confetti i { animation: none !important; } }
-@media (max-width:760px) { .sound-row { grid-template-columns:minmax(70px,1fr) minmax(120px,2fr); } .sound-row input[type="file"] { grid-column:1 / -1; } .sound-volume { grid-column:1 / -1; } }
+@media (max-width:760px) { .sound-row { grid-template-columns:minmax(70px,1fr) minmax(120px,2fr); } .sound-file-control, .sound-volume { grid-column:1 / -1; justify-self:start; } }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
