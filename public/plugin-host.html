@@ -1,20 +1,29 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;background:transparent;overflow:hidden}</style></head><body>
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><style>html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}iframe{display:block;width:100%;height:100%;border:0;background:transparent}</style></head><body>
 <iframe id="plugin" sandbox="allow-scripts" title="Plugin do CSApp"></iframe>
-<script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io-client.min.js?v=1"></script>
 <script>
 const id = location.pathname.split('/').pop();
+const frame = document.getElementById('plugin');
+frame.src = `/plugin-file/${encodeURIComponent(id)}/overlay.html`;
 fetch(`/api/plugins/${id}/public`).then(r => { if (!r.ok) throw Error('Plugin indisponível'); return r.json(); }).then(({ manifest, config }) => {
-    const frame = document.getElementById('plugin');
     let latestTime = 0;
     frame.onload = () => {
         frame.contentWindow.postMessage({ type: 'csapp:config', config }, '*');
         frame.contentWindow.postMessage({ type: 'csapp:event', event: 'timeUpdate', data: latestTime }, '*');
     };
-    frame.src = `/plugin-file/${id}/overlay.html`;
+    if (frame.contentWindow) {
+        frame.contentWindow.postMessage({ type: 'csapp:config', config }, '*');
+        frame.contentWindow.postMessage({ type: 'csapp:event', event: 'timeUpdate', data: latestTime }, '*');
+    }
     const socket = io({ transports: ['websocket'] });
     socket.on('init', data => { latestTime = data.timerSeconds; frame.contentWindow?.postMessage({ type: 'csapp:event', event: 'timeUpdate', data: latestTime }, '*'); });
     socket.on('pluginState', state => { if (state.id === id && !state.enabled) { frame.remove(); socket.disconnect(); } });
     socket.on('pluginConfig', state => { if (state.id === id) frame.contentWindow?.postMessage({ type: 'csapp:config', config: state.config }, '*'); });
     for (const event of manifest.events) socket.on(event, data => frame.contentWindow?.postMessage({ type: 'csapp:event', event, data }, '*'));
-}).catch(error => { document.body.textContent = error.message; });
+}).catch(error => {
+    const message = document.createElement('div');
+    message.textContent = error.message;
+    message.style.cssText = 'color:white;background:#8b1e2d;padding:12px;font:16px Arial';
+    frame.replaceWith(message);
+});
 </script></body></html>
