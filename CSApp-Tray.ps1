@@ -1,7 +1,18 @@
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
+function Write-TrayError($message) {
+    try { [System.IO.File]::AppendAllText((Join-Path $PSScriptRoot 'tray-error.log'), "$(Get-Date -Format s) $message`r`n") } catch {}
+}
 
-$mutex = [Threading.Mutex]::new($true, 'Local\CSAppTray', [ref]$created)
+try {
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+} catch {
+    Write-TrayError $_.ToString()
+    exit 1
+}
+
+$created = $false
+try { $mutex = [Threading.Mutex]::new($true, 'Local\CSAppTray', [ref]$created) }
+catch { Write-TrayError $_.ToString(); exit 1 }
 if (-not $created) {
     $mutex.Dispose()
     return
@@ -91,6 +102,7 @@ try {
     $timer.Start()
     [System.Windows.Forms.Application]::Run($context)
 } catch {
+    Write-TrayError $_.ToString()
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'CSApp') | Out-Null
 } finally {
     if ($timer) { $timer.Stop(); $timer.Dispose() }
