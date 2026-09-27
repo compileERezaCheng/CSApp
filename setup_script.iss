@@ -18,10 +18,17 @@ SetupIconFile=icon.ico
 PrivilegesRequired=lowest
 
 [Files]
-; Copia todos os ficheiros da nossa pasta para a pasta de instalação
-; Ignora a pasta do instalador, o git, o script, e os teus dados/logs privados! 
-; Agora ignora também os node_modules, código fonte, ficheiros temporários e de contexto porque empacotámos tudo num executável!
-Source: "*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "Instalador\*,setup_script.iss,.git\*,data.json,logs.txt,server.stdout.log,server.stderr.log,node_modules\*,server.js,plugin-store.js,test\*,fix*.js,temp.js,package*.json,temp\*,CONTEXTO_PROJETO.md,diff.txt,README.md,public\uploads\*"
+; Apenas ficheiros distribuíveis: nunca incluir data.json, backups, logs ou uploads locais.
+Source: "CSApp_Server.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "cloudflared.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Iniciar-CSApp.vbs"; DestDir: "{app}"; Flags: ignoreversion
+Source: "CSApp-Tray.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "public\*"; DestDir: "{app}\public"; Flags: ignoreversion
+Source: "plugins\time-badge\*"; DestDir: "{app}\plugins\time-badge"; Flags: ignoreversion
+
+[Dirs]
+Name: "{app}\public\uploads"
 
 [Icons]
 ; Arranca o ícone da bandeja sem abrir uma janela de consola
