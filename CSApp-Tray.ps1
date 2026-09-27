@@ -3,7 +3,6 @@ Add-Type -AssemblyName System.Drawing
 
 $mutex = [Threading.Mutex]::new($true, 'Local\CSAppTray', [ref]$created)
 if (-not $created) {
-    Start-Process 'http://localhost:7331'
     $mutex.Dispose()
     return
 }
@@ -50,6 +49,10 @@ try {
     $tray.Text = 'CSApp'
     $tray.ContextMenuStrip = $menu
     $tray.Visible = $true
+    $tray.BalloonTipTitle = 'CSApp'
+    $tray.BalloonTipText = 'Ativo na bandeja. Usa o menu do ícone para abrir o Dashboard.'
+    $tray.BalloonTipIcon = [System.Windows.Forms.ToolTipIcon]::Info
+    $tray.ShowBalloonTip(5000)
 
     $open.Add_Click({ Start-Process 'http://localhost:7331' })
     $tray.Add_DoubleClick({ Start-Process 'http://localhost:7331' })
@@ -73,7 +76,6 @@ try {
 
     $timer = [System.Windows.Forms.Timer]::new()
     $timer.Interval = 2000
-    $script:dashboardOpened = $false
     $timer.Add_Tick({
         if ($server.HasExited) {
             $timer.Stop()
@@ -84,10 +86,6 @@ try {
         try {
             $state = Invoke-RestMethod -Uri $url -Headers $headers -TimeoutSec 1
             $toggle.Text = if ($state.isRunning) { 'Pausar Timer' } else { 'Iniciar Timer' }
-            if (-not $script:dashboardOpened) {
-                $script:dashboardOpened = $true
-                Start-Process 'http://localhost:7331'
-            }
         } catch {}
     })
     $timer.Start()
