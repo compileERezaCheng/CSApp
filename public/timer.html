@@ -89,6 +89,12 @@
                         <button id="btnToggle" class="btn primary">Iniciar / Pausar</button>
                         <button id="btnSet" class="btn secondary">Definir Tempo (Reset)</button>
                     </div>
+
+                    <div style="width:100%; max-width:260px; margin:15px auto 0;">
+                        <button id="btnHappyHour" type="button" class="btn secondary" style="width:100%;" disabled>Ativar Happy Hour</button>
+                        <label for="happyHourMultiplier" style="margin-top:8px;">Multiplicador (×)</label>
+                        <input id="happyHourMultiplier" type="number" min="1" step="any" value="2" required disabled>
+                    </div>
                 </div>
 
                 <div class="glass-panel">
@@ -137,8 +143,8 @@
             
         </main>
     </div>
-    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-    <script src="/admin.js?v=7"></script>
+    <script src="/socket.io-client.min.js"></script>
+    <script src="/admin.js?v=8"></script>
 </body>
 </html>
 

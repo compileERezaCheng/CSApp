@@ -203,6 +203,63 @@ function parseInput(input) {
     return totalSeconds;
 }
 
+const happyHourButton = document.getElementById('btnHappyHour');
+const happyHourInput = document.getElementById('happyHourMultiplier');
+
+if (happyHourButton && happyHourInput) {
+    let happyHour;
+    let toggling = false;
+
+    function showHappyHour(state) {
+        if (state.multiplier !== happyHour?.multiplier && document.activeElement !== happyHourInput) {
+            happyHourInput.value = state.multiplier;
+        }
+        happyHour = state;
+        happyHourButton.textContent = state.enabled
+            ? `Desativar Happy Hour (${String(state.multiplier).replace('.', ',')}×)`
+            : 'Ativar Happy Hour';
+        happyHourButton.classList.toggle('primary', state.enabled);
+        happyHourButton.classList.toggle('secondary', !state.enabled);
+        happyHourButton.disabled = toggling;
+        happyHourInput.disabled = false;
+    }
+
+    async function updateHappyHour(changes) {
+        try {
+            const response = await fetch('/api/timer/happy-hour', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(changes)
+            });
+            if (!response.ok) throw new Error('Falha ao atualizar a Happy Hour.');
+        } catch {
+            alert('Não foi possível atualizar a Happy Hour.');
+        }
+    }
+
+    socket.on('init', ({ happyHour: state }) => {
+        if (state) showHappyHour(state);
+    });
+    socket.on('happyHourUpdated', showHappyHour);
+    socket.on('disconnect', () => {
+        happyHourButton.disabled = true;
+        happyHourInput.disabled = true;
+    });
+
+    happyHourInput.onchange = () => {
+        if (happyHourInput.reportValidity()) updateHappyHour({ multiplier: happyHourInput.valueAsNumber });
+    };
+    happyHourButton.onclick = async () => {
+        const enabled = !happyHour.enabled;
+        if (enabled && !happyHourInput.reportValidity()) return;
+        toggling = true;
+        happyHourButton.disabled = true;
+        await updateHappyHour(enabled ? { enabled, multiplier: happyHourInput.valueAsNumber } : { enabled });
+        toggling = false;
+        happyHourButton.disabled = !socket.connected;
+    };
+}
+
 socket.on('init', (data) => {
     isRunning = data.isRunning;
     if (els.btnToggle) els.btnToggle.innerText = isRunning ? (isMod ? 'Pause' : 'Pausar') : (isMod ? 'Start' : 'Iniciar');

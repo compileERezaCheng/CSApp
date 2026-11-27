@@ -119,12 +119,14 @@ try {
 
 let timerSeconds = savedData.timerSeconds !== undefined ? savedData.timerSeconds : 3600;
 let isRunning = false;
+let happyHourEnabled = false;
 let shuttingDown = false;
 const eventHistory = [];
 const defaultSettings = {
   seToken: '',
   tunnelName: '',
   subTime: 300, subTimeT2: 600, subTimeT3: 1500, bitTime: 60, tipTime: 60, kofiTime: 60, followTime: 10, raidTime: 5, baseRaidTime: 0,
+  happyHourMultiplier: 2,
   goalSubValue: 5,
   designs: {
       timer: {
@@ -145,6 +147,23 @@ if (savedData.settings && savedData.settings.design && !savedData.settings.desig
 let settings = { ...defaultSettings, ...(savedData.settings || {}) };
 if (!settings.designs) settings.designs = defaultSettings.designs;
 if (!settings.modPassword) settings.modPassword = '123';
+
+function isHappyHourMultiplier(value) {
+  return Number.isFinite(value) && value >= 1;
+}
+if (!isHappyHourMultiplier(settings.happyHourMultiplier)) settings.happyHourMultiplier = defaultSettings.happyHourMultiplier;
+
+function happyHourState() {
+  return { enabled: happyHourEnabled, multiplier: settings.happyHourMultiplier };
+}
+
+function eventTimeMultiplier() {
+  return happyHourEnabled ? settings.happyHourMultiplier : 1;
+}
+
+function getEventTime(seconds, multiplier = eventTimeMultiplier()) {
+  return multiplier === 1 ? seconds : Math.min(Math.round(seconds * multiplier), Number.MAX_SAFE_INTEGER);
+}
 
 let timeEventId = 0;
 function emitSound(type) { io.emit('eventSound', { id: ++timeEventId, type }); }
@@ -356,6 +375,19 @@ app.use((req, res, next) => {
   next();
 });
 
+function requireDashboardAuth(req, res, next) {
+  const credentials = req.headers.authorization?.split(' ')[1];
+  if (credentials) {
+    const [username, password] = Buffer.from(credentials, 'base64').toString().split(':');
+    if (password === settings.modPassword) {
+      req.authUsername = username || 'Desconhecido';
+      return next();
+    }
+  }
+  res.setHeader('WWW-Authenticate', 'Basic realm="Painel de Mods"');
+  res.status(401).send(credentials ? 'Password Incorreta' : 'Acesso restrito');
+}
+
 // Autenticação
 app.use((req, res, next) => {
   const protectedPaths = [
@@ -365,21 +397,7 @@ app.use((req, res, next) => {
     '/podium', '/podium.html',
     '/design', '/design.html', '/design.js', '/plugins', '/plugins.html', '/plugins.js'
   ];
-  if (protectedPaths.includes(req.path)) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      res.setHeader('WWW-Authenticate', 'Basic realm="Painel de Mods"');
-      return res.status(401).send('Acesso restrito');
-    }
-    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    if (auth[1] === settings.modPassword) {
-      req.authUsername = auth[0] || 'Desconhecido';
-      return next();
-    } else {
-      res.setHeader('WWW-Authenticate', 'Basic realm="Painel de Mods"');
-      return res.status(401).send('Password Incorreta');
-    }
-  }
+  if (protectedPaths.includes(req.path)) return requireDashboardAuth(req, res, next);
   next();
 });
 
@@ -429,6 +447,29 @@ app.get('/plugin-file/:id/:file', (req, res) => {
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+app.post('/api/timer/happy-hour', requireDashboardAuth, (req, res) => {
+  const { enabled, multiplier } = req.body ?? {};
+  if ((enabled !== undefined && typeof enabled !== 'boolean') ||
+      (multiplier !== undefined && !isHappyHourMultiplier(multiplier))) {
+    return res.status(400).json({ error: 'Indica um multiplicador de 1 ou superior.' });
+  }
+  if (multiplier !== undefined && multiplier !== settings.happyHourMultiplier) {
+    const previous = settings.happyHourMultiplier;
+    settings.happyHourMultiplier = multiplier;
+    if (!saveData()) {
+      settings.happyHourMultiplier = previous;
+      return res.status(500).json({ error: 'Não foi possível guardar o multiplicador.' });
+    }
+  }
+  if (enabled !== undefined && enabled !== happyHourEnabled) {
+    happyHourEnabled = enabled;
+    logAction(req.authUsername, enabled ? `Ativou a Happy Hour (×${settings.happyHourMultiplier})` : 'Desativou a Happy Hour');
+  }
+  const state = happyHourState();
+  io.emit('happyHourUpdated', state);
+  res.json(state);
+});
 
 app.use('/api/plugins', (req, res, next) => {
   if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) return res.sendStatus(403);
@@ -708,7 +749,7 @@ setInterval(() => {
 let currentSeStatus = 'Desconectado';
 
 io.on('connection', (socket) => {
-  socket.emit('init', { timerSeconds, isRunning, settings, baseUrl: currentBaseUrl, kofiUrl: currentKofiUrl, subathonData });
+  socket.emit('init', { timerSeconds, isRunning, settings, happyHour: happyHourState(), baseUrl: currentBaseUrl, kofiUrl: currentKofiUrl, subathonData });
   socket.emit('seStatus', currentSeStatus);
   socket.emit('historyInit', eventHistory);
 
@@ -726,7 +767,7 @@ io.on('connection', (socket) => {
       const hours = Number(data.settings.maxTimerHours);
       if (data.settings.maxTimerHours !== '' && (!Number.isFinite(hours) || hours < 0 || hours > 8760)) return;
     }
-    settings = { ...settings, ...data.settings };
+    settings = { ...settings, ...data.settings, happyHourMultiplier: settings.happyHourMultiplier };
     setTimerSeconds(timerSeconds);
     saveData();
     cleanOrphanUploads(true);
@@ -823,7 +864,7 @@ function connectStreamElements(token) {
 
   let giftAccumulator = {};
 
-function processSubscriber(user, amt, tier, isGifted) {
+function processSubscriber(user, amt, tier, isGifted, multiplier) {
   emitSound(isGifted ? 'gift' : 'sub');
   let timePerSub = settings.subTime;
   if (tier === '2000' && settings.subTimeT2 !== undefined) {
@@ -848,7 +889,7 @@ function processSubscriber(user, amt, tier, isGifted) {
   const uStats = getOrCreateUserStats(user);
   uStats.subs += amt;
   
-  let timeToAdd = amt * timePerSub;
+  const timeToAdd = getEventTime(amt * timePerSub, multiplier);
   const prefix = isGifted ? 'Gift Subs' : 'Subs';
   logToGoogleSheets(`${prefix} T${tier.charAt(0) || '1'}`, amt, user);
 
@@ -881,7 +922,8 @@ function processSubscriber(user, amt, tier, isGifted) {
       if (isGift) {
           const rawGifter = data.data.sender || data.data.senderUsername || data.data.gifter || data.data.user;
           const gifter = (rawGifter && typeof rawGifter === 'string' && rawGifter.trim()) ? rawGifter.trim() : 'Anónimo';
-          const key = `${gifter}_${tier}`;
+          const multiplier = eventTimeMultiplier();
+          const key = `${gifter}_${tier}_${multiplier}`;
           
           if (!giftAccumulator[key]) {
               giftAccumulator[key] = { amount: 0, timer: null };
@@ -892,7 +934,7 @@ function processSubscriber(user, amt, tier, isGifted) {
           giftAccumulator[key].timer = setTimeout(() => {
               const finalAmt = giftAccumulator[key].amount;
               delete giftAccumulator[key];
-              processSubscriber(gifter, finalAmt, tier, true);
+              processSubscriber(gifter, finalAmt, tier, true, multiplier);
           }, 2500); // 2.5s debounce para agrupar gift bombs
           return;
       } else {
@@ -940,6 +982,7 @@ function processSubscriber(user, amt, tier, isGifted) {
       const soundType = data.type === 'cheer' ? 'bits' : data.type === 'tip' || data.type === 'donation' ? 'tip' : data.type === 'follow' || data.type === 'follower' ? 'follow' : 'raid';
       emitSound(soundType);
     }
+    timeToAdd = getEventTime(timeToAdd);
     if (timeToAdd > 0) {
       const soundType = data.type === 'cheer' ? 'bits' : data.type === 'tip' || data.type === 'donation' ? 'tip' : data.type === 'follow' || data.type === 'follower' ? 'follow' : 'raid';
       setTimerSeconds(timerSeconds + timeToAdd, soundType);
@@ -961,7 +1004,7 @@ app.post('/kofi-webhook', (req, res) => {
     const dataObj = req.body.data ? JSON.parse(req.body.data) : req.body;
     if (dataObj.type === 'Test' || dataObj.type === 'Verification') {
         emitSound('kofi');
-        const timeToAdd = 3 * settings.kofiTime;
+        const timeToAdd = getEventTime(3 * settings.kofiTime);
         setTimerSeconds(timerSeconds + timeToAdd, 'kofi');
         saveData();
         logAction('Ko-fi', `Recebeu doação de TESTE. Adicionou ${timeToAdd}s`);
@@ -980,7 +1023,7 @@ app.post('/kofi-webhook', (req, res) => {
           checkSubathonGoals();
       }
       
-      const timeToAdd = amount * settings.kofiTime;
+      const timeToAdd = getEventTime(amount * settings.kofiTime);
       setTimerSeconds(timerSeconds + timeToAdd, 'kofi');
       saveData();
       logAction('Ko-fi', `Recebeu $${amount}. Adicionou ${timeToAdd}s`);

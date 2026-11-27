@@ -8,7 +8,7 @@ const { createServer } = require('node:net');
 const { once } = require('node:events');
 const { io } = require('socket.io-client');
 
-test('timer cap applies to manual adds and reduced caps clamp existing time', { timeout: 10000 }, async () => {
+test('timer cap applies to manual adds and reduced caps clamp existing time', { timeout: 10000 }, async (t) => {
   const probe = createServer().listen(0, '127.0.0.1');
   await once(probe, 'listening');
   const port = probe.address().port;
@@ -71,6 +71,46 @@ test('timer cap applies to manual adds and reduced caps clamp existing time', { 
     next = update(); socket.emit('setTimer', { seconds: 0, user: 'Test' }); assert.equal(await next, 0);
     await endEvent;
     assert.equal(ended, 2);
+
+    await t.test('Happy Hour changes automatic time only and can be switched off', async () => {
+      const url = `${origin}/api/timer/happy-hour`;
+      const authorization = `Basic ${Buffer.from('Test:123').toString('base64')}`;
+      const post = (url, body, headers = {}) => fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(body)
+      });
+      assert.equal((await post(url, { enabled: true })).status, 401);
+      assert.equal((await post(url, { multiplier: 0 }, { authorization })).status, 400);
+
+      async function changeHappyHour(changes, expected) {
+        const changed = once(socket, 'happyHourUpdated');
+        const response = await post(url, changes, { authorization });
+        assert.equal(response.status, 200);
+        assert.deepEqual(await response.json(), expected);
+        assert.deepEqual((await changed)[0], expected);
+      }
+
+      const settingsUpdated = once(socket, 'settingsUpdated');
+      socket.emit('updateSettings', { user: 'Test', settings: { maxTimerHours: 0, kofiTime: 60 } });
+      await settingsUpdated;
+      await changeHappyHour({ enabled: true }, { enabled: true, multiplier: 2 });
+      await changeHappyHour({ multiplier: 1.5 }, { enabled: true, multiplier: 1.5 });
+
+      const donation = { type: 'Donation', amount: '1', from_name: 'Test' };
+      next = update();
+      assert.equal((await post(`${origin}/kofi-webhook`, donation)).status, 200);
+      assert.equal(await next, 90);
+
+      next = update();
+      socket.emit('addTime', { seconds: 20, user: 'Test' });
+      assert.equal(await next, 110);
+
+      await changeHappyHour({ enabled: false }, { enabled: false, multiplier: 1.5 });
+      next = update();
+      assert.equal((await post(`${origin}/kofi-webhook`, donation)).status, 200);
+      assert.equal(await next, 170);
+    });
   } finally {
     socket.disconnect();
     if (child.exitCode === null) { child.kill(); await once(child, 'exit'); }
